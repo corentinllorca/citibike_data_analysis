@@ -1,8 +1,10 @@
 ---
 title: "report"
-author : "Arnaud Stiegler (aes2329), Redouane Dziri (rd2853) and Corentin Llorca (cl3783)"
-date : "Fall 2018"
-output: pdf_document
+author: "Arnaud Stiegler (aes2329), Redouane Dziri (rd2853) and Corentin Llorca (cl3783)"
+date: "Fall 2018"
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -14,6 +16,10 @@ knitr::opts_chunk$set(message = FALSE,
 
 
 ## 2. Description of the data
+
+Our data was collected from [Citibike system data](https://www.citibikenyc.com/system-data). We downloaded trip data (.csv files) from the months of February, July and October 2018 from [trip data](https://s3.amazonaws.com/tripdata/index.html) and daily ridership and membership data from the last quarter of 2014 to the third quarter of 2018 included on the home page (also .csv files).
+
+To prepare the data for use, we concatenated the daily ridership and membership data that was available in one file per quarter per year. We kept decided to remove information on the number of 3-days and 7-days passes bought per day as these were not available across most quarters and we weren't convinced of the usefulness of keeping that information. We also had to deal with inconsistencies in terms of date format and had to level them out across all files in order to merge them with no distorsion and false readings.
 
 
 ## 3. Analysis of data quality
