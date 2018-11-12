@@ -120,7 +120,7 @@ df <- rbind(df,df2)
 ## ------------------------------------------------------------------------
 df2 <- read_csv('data/raw_summary_stats/2017-3.csv', 
                 col_types = '?iiii_')
-df2$Date <- as.Date(df2$Date , "%m/%d/%Y")
+df2$Date <- as.Date(df2$Date , "%m/%d/%y")
 colnames(df2) = c("Date", "Trips", "Miles", "Cumulative Memberships", "24 Hour Passes")
 
 ## ------------------------------------------------------------------------
@@ -129,7 +129,7 @@ df <- rbind(df,df2)
 ## ------------------------------------------------------------------------
 df2 <- read_csv('data/raw_summary_stats/2017-4.csv', 
                 col_types = '?iiii_')
-df2$Date <- as.Date(df2$Date , "%m/%d/%Y")
+df2$Date <- as.Date(df2$Date , "%m/%d/%y")
 colnames(df2) = c("Date", "Trips", "Miles", "Cumulative Memberships",
                   "24 Hour Passes")
 
