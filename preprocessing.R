@@ -175,3 +175,34 @@ df2 <- read_csv('data/2018-07-citibike-trips.csv')
 df3 <- read_csv('data/2018-10-citibike-trips.csv')
 df <- rbind(df, df2, df3)
 write_csv(as.data.frame(df), "2018-feb-jul-oct-citibike-trips.csv")
+
+## ------------------------------------------------------------------------
+# Script to create a station dictionary and remove superfluous duplicates 
+# from the original dataframe and write two new csvs to store the 
+# information
+
+library(readr)
+
+df <- read_csv('data/2018-feb-jul-oct-citibike-trips.csv', 
+               col_types = 'iTTicnnicnnici?')
+
+library(dplyr)
+
+stations <- df %>% select(c("start station id",
+                            "start station name",
+                            "start station latitude",
+                            "start station longitude"))
+stations <- stations %>% group_by("start station id")
+stations <- stations[!duplicated(stations["start station id"]),]
+stations <- stations[,-c(5)]
+colnames(stations) <- c("id", "name", "latitude", "longitude")
+
+df <- df %>% select(-c("start station name",
+                       "start station latitude",
+                       "start station longitude",
+                       "end station name",
+                       "end station latitude",
+                       "end station longitude"))
+
+write_csv(as.data.frame(df), "concise_trips.csv")
+write_csv(as.data.frame(stations), "stations_info.csv")
