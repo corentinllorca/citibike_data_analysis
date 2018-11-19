@@ -2,10 +2,10 @@
 title: "Are there any seasonal patterns in the use of Citibikes?"
 author: "Redouane Dziri"
 output:
+  pdf_document: default
+  html_notebook: default
   html_document:
     df_print: paged
-  html_notebook: default
-  pdf_document: default
 always_allow_html: yes
 ---
 
@@ -28,7 +28,7 @@ More precisely, we will look at the average daily number of bike trips per month
 We don't really know what to expect during the Summer months: on one hand there might be a surge in tourism and tourists renting bikes during this period but on the other commuters are fewer as people leave on vacation. In order to assess the seasonal effect on tourists and residents we will need to separate both groups and compare trends.
 
 ```{r, message = FALSE, warning = FALSE}
-data <- read_csv("data/summary_stats_per_day.csv")
+data <- read_csv("../data/summary_stats_per_day.csv")
 ```
 
 ```{r}
@@ -59,7 +59,9 @@ plot <- plot + theme
 plot
 ```
 
-*Fig 1. The average daily number of trips from October 2014 to September 2018*
+\begin{center}
+\it{Fig 1. The average daily number of trips from October 2014 to September 2018}
+\end{center}
 
 As expected Winter months have much fewer trips than the Summer months, on which the number of trips peak. The number of trips was lowest in February 2015 - around 8,000 daily trips - and highest in June 2018 - around 67,000 daily trips. There is no denying there is an overall global increasing trend, as well as a seasonal component. 
 
@@ -74,7 +76,7 @@ In the following, we will assume that `Customers` are tourists while `Subscriber
 We will compare the number of trips across the two groups for three months : February, July and October 2018.
 
 ```{r}
-df <- read_csv("data/concise_trips_cleaned.csv", col_types = 'iTTiiici?')
+df <- read_csv("../data/concise_trips_cleaned.csv", col_types = 'iTTiiici?')
 ```
 
 ```{r}
@@ -120,7 +122,9 @@ pl <- pl + guides(fill = F) + theme2
 pl
 ```
 
-*Fig 2. The difference in relative frequency of trips across February, July and October between customers and subscribers*
+\begin{center}
+\it{Fig 2. The difference in relative frequency of trips across February, July and October between customers and subscribers}
+\end{center}
 
 The bar chart above shows the relative frequency of trips across different months between the two types of users - in which the height of a bar is the number of trips by that type of user during that month divided by the total number of trips by that type of users across those three months. It becomes evident that `Customers`, who we established were probably mostly tourists, use bikes much more during the Summer months than in Winter. This supports the hypothesis that most `Customers` are tourists, as looking at monthly reports on tourist arrivals from outside of the US to NY - from reports issued by the National Travel & Tourist Office - nearly twice as many tourists are registered during the Summer compared to the Winter months.
 
@@ -171,7 +175,7 @@ most_pop_summer_sub <- head(stat_df_summer_sub, 10)$`start station id`
 ```
 
 ```{r, message = F, warning = F}
-stations <- read_csv("data/stations_info.csv")
+stations <- read_csv("../data/stations_info.csv")
 ```
 
 ```{r}
@@ -235,11 +239,12 @@ map_summer <- map_summer %>%
              label = pop_summer_sub$name,
              labelOptions = labelOptions(noHide = F),
              icon = icon_blue)
-sync(map_winter, map_summer)
 ```
-
-*Fig 3. The most popular stations by type of users in Winter (left) and Summer (right). Green markers represent the customer group (tourists) and blue markers represent annual members}*
+![](../figures/customer_subscriber_seasonal_pattern.png)
+\begin{center}
+\it{Fig 3. The most popular stations by type of users in Winter (left) and Summer (right). Green markers represent the customer group (tourists) and blue markers represent annual members.}
+\end{center}
 
 From this plot the distinction between `Customer` preferences and `Subscriber` preferences jumps out. Preferred stations amongst `Subscribers` are all grouped tightly across Midtown and the North of Downtown Manhattan whereas `Customer` most popular stations are located around Central Park, with two exceptions: the station at `12 Ave & W 40 St`, ideally located for a scenic bike ride along the Hudson River Parkand the station at `Centre St and Chambers St`, ideally located for a bike ride across the Brooklyn Bridge, one of NYC's most iconic tourist destination. The pattern of popular stations for `Subscribers` in Winter crystallizes the hypothesis that the few `Subscribers` that still use Citibikes during the cold Winter months are mostly commuters that park their bike in the dense office building area of Midtown. `Customers` on the other hand exacerbates traits of tourists, with popular stations that span some of NYC's most touristic attractions.
 
-Summer sees a lossening of the behavioral boundaries between `Customers` and `Subscribers`. As the conditions have become more welcoming for a leisure bike ride, NYC residents seem to use the bikes more to get to different places while still commuting a lot. There is a shift south for the most popular stations for `Subscribers` to the animated neighborhoods of Chelsea, Union Square, Soho and the Village, where residents find a lot of what New York City has to offer its residents. The stations favored by `Customers` remained practically the same as during the Winter months, further supporting the hypothesis that most `Customers` are indeed tourists.
+Summer sees a loosening of the behavioral boundaries between `Customers` and `Subscribers`. As the conditions have become more welcoming for a leisure bike ride, NYC residents seem to use the bikes more to get to different places while still commuting a lot. There is a shift south for the most popular stations for `Subscribers` to the animated neighborhoods of Chelsea, Union Square, Soho and the Village, where residents find a lot of what New York City has to offer its residents. The stations favored by `Customers` remained practically the same as during the Winter months, further supporting the hypothesis that most `Customers` are indeed tourists.
