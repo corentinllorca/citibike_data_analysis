@@ -1,0 +1,16 @@
+library(readr)
+df <- read_csv('data/raw_summary_stats/2014-4.csv',
+col_types = '?i_i_i_i_')
+df$Date <- as.Date(df$Date , "%m/%d/%Y")
+colnames(df) = c("Date", "Trips", "Miles", "Cumulative Memberships",
+"24 Hour Passes")
+df2 <- read_csv('data/raw_summary_stats/2015-1.csv',
+col_types = '?i_i_ii_')
+df2$Date <- as.Date(df2$Date , "%m/%d/%Y")
+colnames(df2) = c("Date", "Trips", "Miles", "Cumulative Memberships",
+"24 Hour Passes")
+df <- rbind(df,df2)
+source('~/Desktop/Columbia/data_viz/project_edav/edav_fall_2018/preprocessing.R', echo=TRUE)
+source('~/Desktop/Columbia/data_viz/project_edav/edav_fall_2018/preprocessing.R', echo=TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+df <- read.csv(file = 'concise_trips.csv')
