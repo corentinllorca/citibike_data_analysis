@@ -27,6 +27,8 @@ More precisely, we will look at the average daily number of bike trips per month
 
 We don't really know what to expect during the Summer months: on one hand there might be a surge in tourism and tourists renting bikes during this period but on the other commuters are fewer as people leave on vacation. In order to assess the seasonal effect on tourists and residents we will need to separate both groups and compare trends.
 
+\bigskip
+
 ```{r, message = FALSE, warning = FALSE}
 data <- read_csv("../data/summary_stats_per_day.csv")
 ```
@@ -63,6 +65,8 @@ plot
 \it{Fig 1. The average daily number of trips from October 2014 to September 2018}
 \end{center}
 
+\bigskip
+
 As expected Winter months have much fewer trips than the Summer months, on which the number of trips peak. The number of trips was lowest in February 2015 - around 8,000 daily trips - and highest in June 2018 - around 67,000 daily trips. There is no denying there is an overall global increasing trend, as well as a seasonal component. 
 
 One might wonder what the sharp increases between August 2015 and September 2015, July 2016 and September 2016 represent. We looked into it and found that those were critical months for Citibike that saw the deployment of a large number of bikes and new stations as part of their expansion plan. This probably led more people to at least try the bikes from new stations close to their home.
@@ -74,6 +78,8 @@ We note that Citibike devides its clients into `Customers` and `Subscribers`. `C
 In the following, we will assume that `Customers` are tourists while `Subscribers` are NYC residents. This is a simplistic model that does not account for one-time users that use the bikes sporadically but live in NYC. From personal experience and user feedback, this seems to be a rare occurence and so it seems reasonable to assimilate those users in the tourist group.
 
 We will compare the number of trips across the two groups for three months : February, July and October 2018.
+
+\bigskip
 
 ```{r}
 df <- read_csv("../data/concise_trips_cleaned.csv", col_types = 'iTTiiici?')
@@ -126,6 +132,8 @@ pl
 \it{Fig 2. The difference in relative frequency of trips across February, July and October between customers and subscribers}
 \end{center}
 
+\bigskip
+
 The bar chart above shows the relative frequency of trips across different months between the two types of users - in which the height of a bar is the number of trips by that type of user during that month divided by the total number of trips by that type of users across those three months. It becomes evident that `Customers`, who we established were probably mostly tourists, use bikes much more during the Summer months than in Winter. This supports the hypothesis that most `Customers` are tourists, as looking at monthly reports on tourist arrivals from outside of the US to NY - from reports issued by the National Travel & Tourist Office - nearly twice as many tourists are registered during the Summer compared to the Winter months.
 
 We expected lower numbers of trips during the Winter as supported by our earlier graph but here the number if clearly significantly lower for `Customer` compared to `Subscribers`. `Subscribers` probably still use bike in the Winter by necessity more than for leisure (commute, getting from point A to point B on time for various commitments) and are probably more prepared to rent bikes for the whole season with proper gear to face the cold and often snowy streets.
@@ -135,6 +143,8 @@ In October, the difference in relative usage of the bikes is not significantly d
 **Most popular stations for tourists and residents**
 
 Let us now visualize the most popular stations during Summer and Winter, for both residents and tourists. This could help us see if our hypothesis that most `Subscribers` during Winter months are commuters if the most popular stations for that group are in dense professional areas of the city. This would also help to see whether `Customers` are mostly tourists if the most popular stations are close to scenic or recreational areas. In fact, this would simply give us more insight in hotspots for Citibike use across both groups.
+
+\bigskip
 
 ```{r}
 stat_df <- df %>% select(c("starttime", "stoptime",
@@ -244,6 +254,8 @@ map_summer <- map_summer %>%
 \begin{center}
 \it{Fig 3. The most popular stations by type of users in Winter (left) and Summer (right). Green markers represent the customer group (tourists) and blue markers represent annual members.}
 \end{center}
+
+\bigskip
 
 From this plot the distinction between `Customer` preferences and `Subscriber` preferences jumps out. Preferred stations amongst `Subscribers` are all grouped tightly across Midtown and the North of Downtown Manhattan whereas `Customer` most popular stations are located around Central Park, with two exceptions: the station at `12 Ave & W 40 St`, ideally located for a scenic bike ride along the Hudson River Parkand the station at `Centre St and Chambers St`, ideally located for a bike ride across the Brooklyn Bridge, one of NYC's most iconic tourist destination. The pattern of popular stations for `Subscribers` in Winter crystallizes the hypothesis that the few `Subscribers` that still use Citibikes during the cold Winter months are mostly commuters that park their bike in the dense office building area of Midtown. `Customers` on the other hand exacerbates traits of tourists, with popular stations that span some of NYC's most touristic attractions.
 
