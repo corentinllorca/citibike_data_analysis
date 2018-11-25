@@ -4,3 +4,4 @@
 .Rhistory
 .RDataTmp
 *.nb.html
+.Rproj.user

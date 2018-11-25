@@ -19,7 +19,7 @@ library(plyr)
 library(dplyr)
 library(ggmap)
 library(ggplot2)
-concise_trips <- read_csv("concise_trips.csv")
+concise_trips <- read_csv("../concise_trips.csv")
 head(concise_trips)
 colnames(concise_trips)[4] <- 'start_station_id'
 colnames(concise_trips)[5] <- 'end_station_id'
@@ -27,7 +27,7 @@ concise_trips <- subset(concise_trips, select=-c(starttime,stoptime,bikeid,gende
 ```
 
 ```{r}
-stations_info <- read_csv("~/Desktop/Columbia/data_viz/project_edav/edav_fall_2018/stations_info.csv")
+stations_info <- read_csv("../stations_info.csv")
 colnames(stations_info)[1] = 'start_station_id'
 concise_trips_merged <- merge(x = concise_trips, y = stations_info, by = 'start_station_id')
 
@@ -69,11 +69,12 @@ colnames(most_active)[4] <- 'longitude'
 
 First of all, we can visualize the stations that are the most 'active': those are the stations that have the highest traffic of citibikes (in terms of start and end for each station)
 
-```{r warning=FALSE, comment=FALSE}
+```{r warning=FALSE, comment=FALSE,echo=FALSE}
 
-apiKey <- 'AIzaSyBlArTIZYpahLCoMaIdV4pQn1GxCHk9XR8'
+apiKey <- '******'
 register_google(apiKey, account_type = "premium", day_limit = 100000)
-
+```
+```{r warning=FALSE, comment=FALSE,}
 nyc_base <- ggmap::get_map(location = c(lon = mean(most_active$longitude), lat = mean(most_active$latitude)),zoom=12)
 ggmap(nyc_base) + geom_point(data=most_active, aes(x=longitude, y=latitude,color=n), size=1.2)+
   scale_colour_gradient(low = "blue", high = "red")+
@@ -88,7 +89,7 @@ From the map, we can see that the there are multiple 'active' zones but the gene
 
 To go further in our analysis, we can visualize the most common trips to see whether we can identify trips indicative of either commuting or not.
 
-```{r}
+```{r comment=FALSE, warning=FALSE}
 
 concise_trips_merged_shorted <- count_(concise_trips_merged, vars=c('start_station_id','end_station_id'))
 concise_trips_merged_shorted <- concise_trips_merged_shorted[order(-concise_trips_merged_shorted$n),]
@@ -106,7 +107,7 @@ concise_trips_merged_shorted['from'] <- paste(concise_trips_merged_shorted$latit
 concise_trips_merged_shorted['to'] <- paste(concise_trips_merged_shorted$latitude.y,',', concise_trips_merged_shorted$longitude.y)
 
 ```
-```{r  width=8, height=10, echo=FALSE, cache=FALSE, results=FALSE, comment=FALSE, warning=FALSE}
+```{r  width=8, height=10, cache=FALSE, results=FALSE, comment=FALSE, warning=FALSE}
 library(stringr)
 options(expressions=10000)
 
