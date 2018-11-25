@@ -1,0 +1,105 @@
+---
+title: "Citibike User Behavior"
+author: "Corentin Llorca (cl3783)"
+date: "24 November 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE,
+                      warning = FALSE,
+                      echo = FALSE)
+```
+
+## Is Citi Bike used more by NYC residents or by visitors ?
+
+```{r}
+library(tidyverse)
+data <- read_csv("2018-feb-jul-oct-citibike-trips.csv")
+```
+
+
+In order to answer that question, we will be looking at the "Customer Type" variable in the trip database. "Customer Type" variable, is an unordered factor corresponding to the type of customer having taken the trip. The different levels are "Customer" and "Subscriber". The Customers are defined as the people using a 1 or 3 day pass, thus more likely to be tourists, and the Subscribers are those with the annual pass, thus more likely to be NYC residents. 
+
+The two levels are highly unbalanced, as we can see below : 
+
+```{r}
+data$usertype = factor(data$usertype)
+dplyr::count(data,usertype)
+```
+
+We would expect a service like Citi Bike to be used by residents much more than by tourists, as those would be more likely to use the subway or taxis, and we can see that it is indeed the case here. We observe a roughly 10%/90% repartition. However, the size of our data (more than 4.5 million trips) makes it so that we can still safely assume that the trends observed among customers are actually meaningful.
+
+Our first plot is very straigthforward : we will simply be plotting the count of customers and subscribers for each month (February, July and October). We add a new column with the month of the trip.
+
+```{r}
+
+p1 <- ggplot(data,aes(x = usertype, fill = usertype)) + 
+      geom_bar(color = 'black') + 
+      facet_wrap(~format(data$starttime,"%B")) + 
+      ggtitle("Number of trips per user type for each month") + 
+      xlab("User Type") + ylab("Count") + 
+      theme(legend.position = "none")
+p1
+```
+
+First of all, this confirms that an overwhelming majority of trips are taken by subscribers with the annual pass, who are considered to be NYC residents. We also notice thanks to this plot that the total number of trips taken varies quite a lot over the months : for instance, we can see that there were about half as many trips taken in February as in July or October. This can be explained by the difference in weather, since people are less likely to travel by bike during the winter. This can also be explained by a natural increase of Citibike users over time, which we could verify using the daily ridership and membership data.
+
+As for the variation in the repartition between customers and subscribers, we can clearly see an evolution. We can see that there is a much lower proportion of customers compared to subscribers in the winter than in the summer. This can be explained by the number of tourists visiting New York, which would be much lower in February than in July. Moreover, between July and October, we see the number of customers decrease while the number of subscribers increases: this is a clear indicator that there is a lower proportion of customers in October than in July, although that proportion is still much higher than in February. This is again explained by the varying number of tourists in New York.
+
+### Trip durations for each subscriber type
+
+For our second plot, we want to highlight differences in trip duration between customers and subscribers. One such difference could be the trip durations. Here, we plot a density histogram of the trip durations, faceted by user type.
+
+```{r}
+p2 <- ggplot(data,aes(x = tripduration/60)) + 
+      geom_histogram(aes(y = ..density..), 
+                     fill = "lightblue",color = "black") + 
+      facet_wrap(~usertype) + 
+      ggtitle("Repartition of trip durations for each user type") + 
+      xlab("Trip duration (minutes)") + ylab("Density")
+p2
+```
+
+We also plot vertical lines for both plots that signal the end of the time included in the plan (again, 30 minutes for customers and 45 for subscribers).
+
+```{r}
+line_data = tibble(usertype = c("Customer","Subscriber"), vline = c(30,45))
+
+breaks_21 = seq(0,120,3)
+p21 <- ggplot(data,aes(x = tripduration/60)) + 
+       geom_histogram(aes(y = ..density..),
+                      breaks = breaks_21, 
+                      fill = "lightblue",color = "black") + 
+       facet_wrap(~usertype) + 
+       geom_vline(data = line_data, aes(xintercept = vline)) +
+       ggtitle("Repartition of trip durations for each user type, for trip durations < 2h") + 
+       xlab("Trip duration (minutes)") + ylab("Density")
+p21
+```
+
+This time, both repartitions can be seen clearly, and we notice that they are very different from one another. Indeed, residents tend to favor shorter trips, with the overwhelming majority of trips taken being around 10 to 15 minutes long. Customers, on the other hand, take longer trips, with the mode being around 25 minutes. This can be explained by the fact that we consider the majority of customers to be tourists, and tourists would explore the city much more than residents, thus taking longer-lasting trips. In order to check that assumption, we might have to plot the distribution of approximate trip length depending on the user type. 
+
+Moreover, we can notice that customers are generally much keener on taking long trips, going as far as to make them longer than the time that is included in the plan. Indeed, even though we do notice a significant dropoff between the 25 to 30 and 30 to 35 minutes bins, a significant part of customer trips are still longer than 30 minutes, with some of them going well past 1 hour. As for subscribers, they usually take very few trips longer than 45 minutes, which is their alloted time limit.
+
+Something we could expand upon later in the project would be a similar type of plot, but also faceted by month, which would reveal the behavioral patterns between different user types in the different seasons. 
+
+### Trip times for each user type
+
+For our last plot, we want to check whether there are differences between user types in regards to the time of day at which trips are taken. We use the hour from "starttime" as the trip time, and plot another density histogram, with one bin corresponding to one hour.
+
+```{r}
+
+p3 <- ggplot(data,
+             aes(x = as.numeric(format(data$starttime,"%H")))) + 
+      geom_histogram(aes(y = ..density..), bins = 24,
+                     fill = "lightblue",color = "black") + 
+      facet_wrap(~usertype) + 
+      ggtitle("Repartition of trip times for each user type") + 
+      xlab("Hour of the day") + ylab("Density")
+p3
+```
+
+We can see, surprisingly enough, that there is little to no difference in the distributions of the trip hours between subscribers and customers. Although we did expect the subscriber trip times to have two modes around the morning and the late afternoon corresponding to working hours, we would have expected for customer trip times to be more spread out during the day since we assumed that customers were mostly tourists.
+
+This might for instance mean that customers are actually mostly residents who sometimes purchase short-term passes, but who don't bike enough for a $170 annual subscription to be worth it. This can also mean that tourists use Citibike at roughly the same times as residents use it to commute, which is probably the case. In any case, this forms a very interesting question that we can answer later on in our project.
