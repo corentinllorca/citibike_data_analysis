@@ -12,9 +12,13 @@ df <- df %>% filter(`start station id` != `end station id` |
                     (`start station id` == `end station id` &
                     tripduration > 90))
 
-## remove trips that last longer than 1 hour and 30 minutes
 
-df <- df %>% filter(tripduration < 5400)
+#Turning usertype into a factor
+df$usertype <- factor(df$usertype)
+
+#Removing absurdly long trips, threshold can be changed 
+trip_duration_limit = 7200  #in seconds
+df <- df %>% filter(tripduration < trip_duration_limit)
 
 ## write new cleaned data
 

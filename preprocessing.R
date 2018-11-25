@@ -1,5 +1,6 @@
 
 library(readr)
+library(dplyr)
 
 ## ------------------------------------------------------------------------
 df <- read_csv('data/raw_summary_stats/2014-4.csv', 
@@ -174,6 +175,7 @@ df <- read_csv('data/2018-02-citibike-trips.csv')
 df2 <- read_csv('data/2018-07-citibike-trips.csv')
 df3 <- read_csv('data/2018-10-citibike-trips.csv')
 df <- rbind(df, df2, df3)
+
 write_csv(as.data.frame(df), "data/2018-feb-jul-oct-citibike-trips.csv")
 
 ## ------------------------------------------------------------------------
