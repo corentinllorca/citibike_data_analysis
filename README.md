@@ -1,6 +1,30 @@
 # edav_fall_2018
 EDAV Project for Fall 2018 - Corentin Llorca, Redouane Dziri, Arnaud Stiegler
 
+# Project progress tracking
+
+### 11-19-2018, Redouane
+
+Added preprocessing step in `preprocessing.R`. Separates the largest files by filtering out all the stations information. Outputs two files : `concise_trips.csv` with all the trips information and `stations_info.csv` containing the name and latitude, longitude of each station (removed in the former file).
+
+Please run the last bit of `preprocessing.R` to generate those files in your local repositories.
+
+Created R script `data_cleaning.R` with cleaning steps that can be applied before pretty much any exploration - removes noisy data and strong outliers that reflect unproper trip tracking, stolen bikes, malfunctioning bikes
+
+Please run the script after `preprocessing.R` once all files have been placed in `data` folder
+
+Explored seasonal patterns. Two different outputs: pdf (with static picture of map from screenshot placed in folder `figures` and html (with interactive map). The interactiveness of the map is not very useful, except to see the names of the stations by hovering over their markers. The screenshot will probably be better suited for reporting.
+
+Please take a look at how seasons affected tourist and residents behaviour before conducting further analysis on differences between tourists and residents to avoid redundant story-telling
+
+### 11-23-2018, Redouane
+
+Added preprocessing step in `preprocessing.R`. Cleans up `weather.csv` to make it lighter and remove information that is irrelevant to our question. Outputs file `concise_weather.csv` to the data folder with one line per day from October 2014 (included) to October 2018 (not included) with weather information for each day.
+
+Please run the last bit of `preprocessing.R` to generate this file in your local repositories.
+
+Explored weather effect on Citibike use (precipitations and temperature mostly). Depending on future needs, can explore snow and wind or expand on temperature.
+
 # How do people use Citibike?
 
 ## Are there any seasonal patterns (travel time, number of users?) ? Possible explanations

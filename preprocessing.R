@@ -167,11 +167,52 @@ colnames(df2) = c("Date", "Trips", "Miles", "Cumulative Memberships",
 df <- rbind(df,df2)
 
 ## ------------------------------------------------------------------------
-write_csv(as.data.frame(df), "summary_stats_per_day.csv")
+write_csv(as.data.frame(df), "data/summary_stats_per_day.csv")
 
 ## ------------------------------------------------------------------------
 df <- read_csv('data/2018-02-citibike-trips.csv')
 df2 <- read_csv('data/2018-07-citibike-trips.csv')
 df3 <- read_csv('data/2018-10-citibike-trips.csv')
 df <- rbind(df, df2, df3)
-write_csv(as.data.frame(df), "2018-feb-jul-oct-citibike-trips.csv")
+write_csv(as.data.frame(df), "data/2018-feb-jul-oct-citibike-trips.csv")
+
+## ------------------------------------------------------------------------
+# Script to create a station dictionary and remove superfluous duplicates 
+# from the original dataframe and write two new csvs to store the 
+# information
+
+df <- read_csv('data/2018-feb-jul-oct-citibike-trips.csv', 
+               col_types = 'iTTicnnicnnici?')
+
+library(dplyr)
+
+stations <- df %>% select(c("start station id",
+                            "start station name",
+                            "start station latitude",
+                            "start station longitude"))
+stations <- stations %>% group_by("start station id")
+stations <- stations[!duplicated(stations["start station id"]),]
+stations <- stations[,-c(5)]
+colnames(stations) <- c("id", "name", "latitude", "longitude")
+
+df <- df %>% select(-c("start station name",
+                       "start station latitude",
+                       "start station longitude",
+                       "end station name",
+                       "end station latitude",
+                       "end station longitude"))
+
+write_csv(as.data.frame(df), "data/concise_trips.csv")
+write_csv(as.data.frame(stations), "data/stations_info.csv")
+
+#--------------------------------------------------------------------------
+# Script to keep only relevant information from the weather.csv
+
+library(lubridate)
+
+df <- read_csv('data/weather.csv')
+
+df2 <- df %>% select(c(3, 4, 6, 7, 8, 10, 11)) %>% 
+  filter(DATE > ymd("2014-09-30"), DATE < ymd("2018-10-01"))
+
+write_csv(as.data.frame(df2), "data/concise_weather.csv")

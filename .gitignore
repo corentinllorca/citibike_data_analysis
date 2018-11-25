@@ -1,3 +1,6 @@
 .DS_Store
 *.csv
-
+.RData
+.Rhistory
+.RDataTmp
+*.nb.html
