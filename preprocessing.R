@@ -196,6 +196,8 @@ stations <- stations %>% group_by("start station id")
 stations <- stations[!duplicated(stations["start station id"]),]
 stations <- stations[,-c(5)]
 colnames(stations) <- c("id", "name", "latitude", "longitude")
+# remove dockless bike information
+stations <- stations %>% filter(!is.na(id))
 
 df <- df %>% select(-c("start station name",
                        "start station latitude",

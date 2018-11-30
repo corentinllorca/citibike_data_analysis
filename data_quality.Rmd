@@ -1,0 +1,170 @@
+---
+title: "Analysis of data quality"
+author: "Redouane Dziri"
+output: html_notebook
+---
+
+This notebook was used for exploratory analysis to assess data quality and inform decision-making on the steps to be taken in the data cleaning phase.
+
+Before conduction any exploratory analysis we need to assess data quality. A quick survey of the weather data reveals that the data is tidy, with no outliers and no missing values. 
+
+The trip data fetched from February, July and October 2018 on the other hand has a few notable mishaps. The coding for categorical data is consistent - no multiple codings for the same item - and the data dictionary available online explains each individual variable clearly as well as the levels of categorical variables.
+
+```{r}
+library(readr)
+```
+
+```{r}
+# Import the data
+non_clean_df <- read_csv("data/2018-feb-jul-oct-citibike-trips.csv", col_types = 'iTTicnnicnnici?')
+```
+
+### 1. Missing data
+
+We first looked at the missing data patterns.
+
+```{r}
+library(extracat)
+```
+
+```{r}
+head(non_clean_df)
+```
+
+```{r}
+visna(non_clean_df)
+```
+
+The only missing data pattern apart from no missing data appears to be missing ids for the start and end stations. The first question we asked ourselves when seeing this is: why is only the id of the station missing and not the station name or longitude/latitude?
+
+#### 1. Missing station ids
+
+To understand it better we peeked at the rows with missing start and end station ids:
+
+```{r}
+library(dplyr)
+```
+
+```{r}
+head(non_clean_df[is.na(non_clean_df$`start station id`),])
+```
+
+We noticed two things:
+- it would seem that missing ids for the start and end stations is also associated with missing names for those stations. R just did not recognize those as missing values as they were encoded as strings 'NULL' and not NA.
+- those stations all seem associated with high latitudes
+
+So we tried to look up those stations by cross referencing their longitude/latitude with the online Citibike stations map. We were surprised to find that there were no stations to be found. Instead we discovered that those trips corresponded to a new dockless bike area launched by Citibike in the Bronx in August 2018. Bikes are available in certain areas of the Bronx and can be left anywhere, without docking - which explains the lack of start and end stations. The position of the bikes is still registered (longitude and latitude of where the bike was picked up and dropped off registered). All the data for such trips is dated after August 2018, which seals the coffin. 
+
+We will separate this data from the rest and explore it separately as it relates to a whole other way of envisioning bike sharing.
+
+#### 2. Missing gender
+
+After closer inspection we realized some gender was missing. It was not detected early on because the missing data was not encoded as NA. Rather missing genders were input as 0. Males are 1s and Females are 2s. We first changed the encoding to a more transparent one and looked at how many values for gender are missing
+
+```{r}
+non_clean_df$gender <- factor(non_clean_df$gender)
+levels(non_clean_df$gender) <- c("Missing", "Male", "Female")
+```
+
+```{r}
+nrow(non_clean_df[non_clean_df$gender == "Missing",0])
+```
+
+There is a significant number of missing values in the gender column. This should be kept in mind when analysis requires faceting on gender or studying variables in relation to gender.
+
+There is no reason to discard the data with missing gender; the trips' validity is not brought into question. We can not think of any satisfactory way to impute missing genders without risking to distort the data significantly so we will just filter it out whenever gender comes into play.
+
+### 2. Outliers
+
+Next we dived into detecting outliers.
+
+#### 1. Age
+
+Citibike clearly states in its Help Center: "You have to be 16 years or older to ride Citi Bike." While we are not convinced this is really enforced and is more of a legal protection than anything else, we do know that one requires to log in their smartphone and pay with credit/debit card to ride a bike. So we will assume that the bulk of riders is 16 or older. The App should not let you log in if you indicate a younger age anyways. There shouldn't be younger riders in our data. This can only be checked grossly as data contains only the birth year of the user and not their month or day of birth.
+
+```{r}
+non_clean_df[non_clean_df$`birth year` > 2002,]
+```
+
+It turns out that there are no such young riders.
+
+An important thing to note is that Citibike does not enforce identity verification. Therefore one can input whichever age they want when registering. This casts some doubt on the validity of the data at hand, but we will assume that most people don't lie about their age when registering.
+
+We have to be watchful of people that register with a very old age.
+
+```{r}
+nrow(non_clean_df[non_clean_df$`birth year` < 1938, 0])
+```
+
+```{r}
+nrow(non_clean_df[non_clean_df$`birth year` < 1938, 0]) / nrow(non_clean_df[0])
+```
+
+There are around 5,000 trips for people over 90 years old. Whilst it is very possible that a senior 90 or older would rent out a bike, the validity of the age data in this range is seriously doubtful. Nevertheless there is no reason the data on the trips themselves should be wrong or corrupted so we will keep them (we could remove them as they represent less than 0.2 % of the data). We should just remember to filter them out whenever age is a factor in our analysis.
+
+#### 2. Trip Duration
+
+Now more about the trips themselves: we wish to examine outliers in terms of trip duration. Ideally we would remove trips under 90 seconds and over 2 hours.
+
+Why 90 seconds? We believe most of those trips will correspond to a change of heart by the user or more frequently, bikes that don't work properly and are re-docked. A person using a bike to get from point A to point B would probably walk instead if the trip was under 90 seconds so the risk of filtering out valid data is small. It should not take more than 90 seconds for most users to become dissatisfied with a bike to the point of choosing to dock it and taking another one or choosing an alternative means of transportation. Therefore it seems reasonable that there should not be a significant number of invalid trips, on the basis of short trip duration, left in the data after filtering out those under 90 seconds.
+
+Why 2 hours? Customers using passes are allowed 30-minute rides and then pay each extra 15 minute until they dock their bike. This extends to 45 minutes for Subscribers. Given the density of the Citibike station network, as their expiration approaches, a user would probably dock their bike and take another one rather than pay more for longer trips. 2 hours is a safe bet: we will probably retain some unproperly registered trip durations but the risk of removing valid data is small. Reasons for longer registered trip durations can be failure to dock the bike, stolen bikes, or broken docks.
+
+```{r}
+nrow(non_clean_df[non_clean_df$`tripduration` < 90, 0])
+```
+
+There are a little less than 30,000 trips registered that last less than 90 seconds. This may seem like a lot but from personal experience, getting an unsatisfactory bike is not a rare occurrence so we are not too surprised. They represent a little less than 1 % of the data and we choose to remove them as we believe they would only add noise to our analysis.
+
+```{r}
+nrow(non_clean_df[non_clean_df$`tripduration` > 7200, 0])
+```
+
+There are a little less than 13,000 trips which last more than 2 hours. We will also remove those.
+
+### 3. User characteristics distribution
+
+To get a better idea of the data at hand we decided to also include the distribution of user characteristics in our preliminary data analysis.
+
+#### 1. Gender
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+ggplot(non_clean_df, aes(x = gender)) + geom_bar(fill = "lightblue") + theme_bw()
+```
+
+There are significantly more males using Citibike than females. We will keep this in mind as it might provide insight in some findings. Again we see there is a significant number of missing gender values.
+
+Again, users can input whichever gender they wish, there is no identity verification. Nevertheless we feel that most people would not lie about their identified gender.
+
+#### 2. User types
+
+```{r}
+ggplot(non_clean_df, aes(x = usertype)) + geom_bar(fill = "maroon") + theme_bw()
+```
+
+There are significantly more Subscribers (year-long subscribers) than Customers (Pass or Single Trip users). This will be interesting when we try to figure out commuters v. tourists habits and differences in Citibike usage.
+
+#### 3. Age
+
+After removing outliers as discussed above:
+
+```{r}
+non_clean_df <- non_clean_df %>% filter(non_clean_df$`birth year` > 1937)
+```
+
+```{r}
+ggplot(non_clean_df, aes(x = `birth year`)) + geom_histogram(fill = "orange", color = 'white', binwidth = 1) + theme_bw()
+```
+
+The first thing we notice is the outlier value for 1969. We think this might have been the default age value for which users did not have to interact with the system to change their age. Many would have agreed to that value without a second glance. Any analysis based on the age of users or their birth years will take this into account, probably by altogether ignoring this value since it probably includes data for all ages. 
+
+The distribution shows that there are few users under 20 and a long tail peaking around 25 (the age depends on the time of registration so this is a rough estimate based on the fact that Citibike exists since 2013). We expected fewer adults over 60 to use Citibike.
+
+```{r}
+non_clean_df %>% filter(!is.na(`start station id`))
+```
+
