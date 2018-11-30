@@ -25,6 +25,14 @@ Please run the last bit of `preprocessing.R` to generate this file in your local
 
 Explored weather effect on Citibike use (precipitations and temperature mostly). Depending on future needs, can explore snow and wind or expand on temperature.
 
+### 11-3--2018, Redouane
+
+Modified preprocessing to remove `NA` information from `stations_info` (corresponds to dockless bike). Added steps to data cleaning to remove dockless bike trip data and factor gender variable.
+
+Carried out data quality analysis (in its own notebook, and transferred deliverables to `report.Rmd`).
+
+Added information on data retrieval, preprocessing, analysis and cleaning to the report.
+
 # How do people use Citibike?
 
 ## Are there any seasonal patterns (travel time, number of users?) ? Possible explanations
