@@ -5,3 +5,4 @@
 .RDataTmp
 *.nb.html
 .Rproj.user
+.Rproj

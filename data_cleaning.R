@@ -13,13 +13,23 @@ df <- df %>% filter(`start station id` != `end station id` |
                     tripduration > 90))
 
 
-#Turning usertype into a factor
+# turning usertype into a factor
 df$usertype <- factor(df$usertype)
 
-#Removing absurdly long trips, threshold can be changed 
+# removing absurdly long trips, threshold can be changed 
 trip_duration_limit = 7200  #in seconds
 df <- df %>% filter(tripduration < trip_duration_limit)
 
-## write new cleaned data
+# remove data from dockless bikes
+df <- df %>% filter(!is.na(`start station id`))
 
-write_csv(as.data.frame(df), 'concise_trips_cleaned.csv')
+# turn gender to factor and change levels
+df$gender <- factor(df$gender)
+levels(df$gender) <- c("Missing", "Male", "Female")
+
+# write new cleaned data
+
+write_csv(as.data.frame(df), 'data/concise_trips_cleaned.csv')
+
+
+
