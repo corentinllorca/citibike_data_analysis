@@ -3,16 +3,16 @@ title: "Untitled"
 output: pdf_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE,echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Are citibikes actually used for commuting ?
+## Are there some geographical trends to the use of citibikes ?
 
-In this part, we will try to identify geographical trends and see whether they can constitute evidence that citibikes are used by new yorkers as a way of commuting.To do so, we will mainly focus on geographical features (stations locations for the start and end of the trip) while discarding aspects such as seasonnality.
+In this part, we will try to identify geographical trends to try and understand what use people have of the cibibikes. Based on New York geography and its subway tracks, we expect to find some proofs that citibikes are a means of transportation for routes that are harder to do with subways, for instance East-West commutation. Furthermore, we will try to identify trends that shows that bikes are both a recreational and a practical way of commuting in New York. For the following study, we will focus on geograpical features, such as the station locations, as well as the route and the distance done by users (we do discard any seasonality effect by aggregating over the study over the 3 months we chose previously).
 
 
-```{r, comment=FALSE, message=FALSE,warning=FALSE}
+```{r, comment=FALSE, message=FALSE,warning=FALSE,echo=FALSE}
 library(readr)
 library(sp)
 library(plyr)
@@ -25,7 +25,7 @@ colnames(concise_trips)[5] <- 'end_station_id'
 concise_trips <- subset(concise_trips, select=-c(starttime,stoptime,bikeid,gender))
 ```
 
-```{r comment=FALSE, message=FALSE,warning=FALSE}
+```{r comment=FALSE, message=FALSE,warning=FALSE,echo=FALSE}
 stations_info <- read_csv("../stations_info.csv")
 colnames(stations_info)[1] = 'start_station_id'
 concise_trips_merged <- merge(x = concise_trips, y = stations_info, by = 'start_station_id')
@@ -35,7 +35,7 @@ concise_trips_merged <- merge(x = concise_trips_merged, y = stations_info, by = 
 ```
 
 ## Including Plots
-```{r comment=FALSE, message=FALSE,warning=FALSE}
+```{r comment=FALSE, message=FALSE,warning=FALSE,echo=FALSE}
 #COMPUTING THE MOST STARTED STATIONS
 colnames(stations_info)[1] = 'start_station_id'
 most_started <- count(concise_trips_merged, c(concise_trips_merged$start_station_id))
@@ -51,7 +51,7 @@ most_ended_merged <- merge(x = most_ended, y = stations_info, by = 'end_station_
 most_ended_merged  <- most_ended_merged[order(-most_ended_merged$n),]
 ```
 
-```{r}
+```{r,echo=FALSE}
 #AGGREGATING THE TWO TO SEE THE MOST ACTIVE STATIONS
 colnames(most_started_merged)[1] = 'station_id'
 colnames(most_started_merged)[2] = 'n_s'
@@ -66,16 +66,19 @@ colnames(most_active)[3] <- 'latitude'
 colnames(most_active)[4] <- 'longitude'
 ```
 
-First of all, we can visualize the stations that are the most 'active': those are the stations that have the highest traffic of citibikes (in terms of start and end for each station)
 
-```{r warning=FALSE, comment=FALSE,echo=FALSE}
+# 1) Most active stations
 
-apiKey <- '*****'
+First of all, we can visualize the stations that are the most 'active': those are the stations that have the highest traffic of citibikes (in terms of start and end for each station).
+
+```{r warning=FALSE, comment=FALSE,echo=FALSE,cache=FALSE, results=FALSE, comment=FALSE, warning=FALSE,message=FALSE}
+
+apiKey <- '******'
 register_google(apiKey, account_type = "premium", day_limit = 100000)
 ```
-```{r warning=FALSE, comment=FALSE,}
-nyc_base <- ggmap::get_map(location = c(lon = mean(most_active$longitude), lat = mean(most_active$latitude)),zoom=12)
-ggmap(nyc_base) + geom_point(data=most_active, aes(x=longitude, y=latitude,color=n), size=1.2)+
+```{r warning=FALSE, comment=FALSE,echo=FALSE,results=FALSE,error=FALSE}
+nyc_base <- ggmap::get_map(location=c(lon=mean(most_active$longitude),lat=mean(most_active$latitude)),zoom=12)
+ggmap(nyc_base)+geom_point(data=most_active,aes(x=longitude, y=latitude,color=n), size=1.2)+
   scale_colour_gradient(low = "blue", high = "red")+
   xlab("Latitude")+
   ylab("Longitude")+
@@ -83,34 +86,42 @@ ggmap(nyc_base) + geom_point(data=most_active, aes(x=longitude, y=latitude,color
   theme(plot.title = element_text(hjust = 0.5))+ scale_fill_discrete(name = "Activity (in number of customers")
 ```
 
-From the map, we can see that the there are multiple 'active' zones but the general trend is that Midtown is the most active part of Manhattan. There is also quite a bit of activity in Downtown, along Central Park and in the neighborhoods of Brooklyn that are close to Manhattan. Areas close to Central Park, or in Brooklyn are zones mostly visited by tourists. However, the high activity of citibikes in Midtown could be evidence that citibikes are used for commuting since Midtown is a working area of Manhattan. Furthermore, the activity in Downtown also seems more likely to be the result of commuting then visiting.
+From the map, we can see that the there are multiple 'active' zones but the general trend is that Midtown is the most active part of Manhattan. There is also a lot of activity in Downtown, along Central Park and in the neighborhoods of Brooklyn that are close to Manhattan. Areas close to Central Park, or in Brooklyn are zones that we can consider to be mostly visited by tourists. However, the high activity of citibikes in Midtown could be evidence that citibikes are used for commuting since Midtown is a working area of Manhattan. Furthermore, the activity in Downtown also seems more likely to be the result of commuting then visiting.
 
 
-To go further in our analysis, we can visualize the most common trips to see whether we can identify trips indicative of either commuting or not.
+# 2) Most commons routes
 
-```{r comment=FALSE, warning=FALSE}
+To go further in our analysis, we can visualize the most common trips made by citibikes users. To do so, we will gather for each trip the start station and the station of arrival, and compute the most likely route the users took by using the route function from ggmap package (and using the option so that the routes are tailored for bike use).
 
-concise_trips_merged_shorted <- count_(concise_trips_merged, vars=c('start_station_id','end_station_id'))
+```{r comment=FALSE, warning=FALSE,echo=FALSE}
+
+concise_trips_merged_shorted <- count_(concise_trips_merged, 
+                                       vars=c('start_station_id','end_station_id'))
 concise_trips_merged_shorted <- concise_trips_merged_shorted[order(-concise_trips_merged_shorted$n),]
 concise_trips_merged_shorted <- concise_trips_merged_shorted[1:1000,]
 
 colnames(stations_info)[1] = 'start_station_id'
-concise_trips_merged_shorted <- merge(x = concise_trips_merged_shorted, y = stations_info, by = 'start_station_id')
+concise_trips_merged_shorted <- merge(x = concise_trips_merged_shorted, 
+                                      y = stations_info, by = 'start_station_id')
 
 
 colnames(stations_info)[1] = 'end_station_id'
-concise_trips_merged_shorted <- merge(x =concise_trips_merged_shorted, y = stations_info, by = 'end_station_id')
+concise_trips_merged_shorted <- merge(x =concise_trips_merged_shorted, 
+                                      y = stations_info, by = 'end_station_id')
 concise_trips_merged_shorted <- concise_trips_merged_shorted[order(-concise_trips_merged_shorted$n),]
 
-concise_trips_merged_shorted['from'] <- paste(concise_trips_merged_shorted$latitude.x,',', concise_trips_merged_shorted$longitude.x)
-concise_trips_merged_shorted['to'] <- paste(concise_trips_merged_shorted$latitude.y,',', concise_trips_merged_shorted$longitude.y)
+concise_trips_merged_shorted['from'] <- paste(concise_trips_merged_shorted$latitude.x,',',
+                                              concise_trips_merged_shorted$longitude.x)
+concise_trips_merged_shorted['to'] <- paste(concise_trips_merged_shorted$latitude.y,',',
+                                            concise_trips_merged_shorted$longitude.y)
 
 ```
-```{r  width=8, height=10, cache=FALSE, results=FALSE, comment=FALSE, warning=FALSE,message=FALSE}
+```{r  width=8, height=10, cache=FALSE, results=FALSE, comment=FALSE, warning=FALSE,message=FALSE,echo=FALSE}
 library(stringr)
 options(expressions=10000)
 
-nyc_base <- ggmap::get_map(location = c(long = -73.97634,lat = 40.75000),zoom=12,color='bw',maptype = 'terrain')
+nyc_base <- ggmap::get_map(location = c(long = -73.97634,lat = 40.75000),
+                           zoom=12,color='bw',maptype = 'terrain')
 nyc_base <- ggmap(nyc_base)
 
 
@@ -151,15 +162,17 @@ base+
 
 The above map provides some interesting information:
 
-- There are some main zones where the trips are done: around Central Park, in Midtown as well as along the Hudson River
+- There are some main zones where the trips are done: around Central Park, in Midtown as well as along the Hudson River. 
 - Touristic zones can be identified: Central Park, Governor's island for instance
-- However, for instance the bike lane along the Hudson River can be either commuting or visiting: this is the fastest way of going north/south
+- The Hudson River route is particularly interesting because it is the very example of a hybrid route: it is widely used by new yorkers since it is the fastest way for going north/south. But it is also a very scenic route, thus a lot of tourists use it to see the shore
 - Finally, it seems that an important part of the trips that are done in Midtown are mostly longitudinal: this might be a clue that people are using citibikes to compensate for the lack of subways in the East-West direction.
 
 
-Finally, from latitude/longitude data from each trip, we can extract useful information to see if there are some patterns: maybe subscribers use citibikes 
+# 3) Geographical patterns for trips
 
-```{r}
+Finally, we would like to study whether there are some geographical patterns related to latitude/longitude features. More specifically, we would like to see if there are some discrepancies between subscribers and customers on this particular matter.
+
+```{r,echo=FALSE}
 colnames(stations_info)[1] = 'start_station_id'
 concise_trips <- merge(x = concise_trips, y = stations_info, by = 'start_station_id')
 
@@ -170,42 +183,44 @@ concise_trips <- merge(x = concise_trips, y = stations_info, by = 'end_station_i
 concise_trips$dirNS <- abs(concise_trips$longitude.y - concise_trips$longitude.x)
 concise_trips$dirWE <- abs(concise_trips$latitude.y - concise_trips$latitude.x)
 ```
-```{r}
-p <- ggplot(concise_trips,aes(x=concise_trips$dirNS,color=concise_trips$usertype)) +geom_density()
-p+
-  xlab("Difference in Longitude")+
+```{r,echo=FALSE}
+p <- ggplot(concise_trips,aes(x=concise_trips$dirNS,color=concise_trips$usertype))+geom_density()
+p+xlab("Difference in Longitude")+
   ylab("Density")+
   ggtitle("Difference in Longitude per usertype")+
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
 
-```{r}
-p <- ggplot(concise_trips,aes(x=concise_trips$dirWE,color=concise_trips$usertype)) +geom_density()
-p+
-  xlab("Difference in Latitude")+
+```{r,echo=FALSE}
+p <- ggplot(concise_trips,aes(x=concise_trips$dirWE,color=concise_trips$usertype))+geom_density()
+p+xlab("Difference in Latitude")+
   ylab("Density")+
   ggtitle("Difference in Latitude per usertype")+
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-Here we have plotted the absolute difference in longitude between start and finish. Because of the layout fo New York, we can approximate longitude difference as a North/South difference and latitude difference as a East/West difference.We can see that for both latitude and longitude, subscribers have a much higher peak close to low values. This is more visible for latitude.It reveals that subscribers and customers have a different use of the citibikes: subscribers usually do shorter rides (in terms of distance) specially if it is for a North/South difference. This seems to follow the logic of commuting: commuters will not do lengthy North/South rides since it is slower than taking the subway. However, for short rides, it can be quicker to take a bike.
+Here we have plotted the absolute difference in longitude between start and finish. Because of the layout fo New York, we can approximate longitude difference as a North/South difference and latitude difference as a East/West difference.We can see that for both latitude and longitude, subscribers have a much higher peak close to low values. 
 
-```{r}
+It reveals that subscribers and customers have a different use of the citibikes: subscribers usually do shorter rides (in terms of distance) specially if it is for a North/South difference. This seems to follow the logic of commuting: commuters will not do lengthy North/South rides since it is slower than taking the subway. However, for short rides, it can be quicker to take a bike.
+
+
+
+```{r warning=FALSE,echo=FALSE}
 library(geosphere)
-concise_trips$distance <- distGeo (matrix(c(concise_trips$latitude.x,concise_trips$longitude.x),ncol = 2), matrix(c(concise_trips$latitude.y, concise_trips$longitude.y),ncol = 2))
+concise_trips$distance <- distGeo (matrix(c(concise_trips$latitude.x,concise_trips$longitude.x),ncol = 2),
+                                   matrix(c(concise_trips$latitude.y, concise_trips$longitude.y),ncol = 2))
 concise_trips <- subset(concise_trips,
                         select=-c(name.y,name.x,longitude.x,longitude.y,latitude.x,latitude.y))
-p <- ggplot(concise_trips,aes(x=concise_trips$distance,color=concise_trips$usertype)) +geom_density()
-p+
-  xlab("Distance")+
+p <- ggplot(concise_trips,aes(x=concise_trips$distance,color=concise_trips$usertype))+geom_density()
+p+xlab("Distance")+
   ylab("Density")+
   ggtitle("Difference in distance per usertype")+
   theme(plot.title = element_text(hjust = 0.5))
 
 ```
 
-If we plot the distribution of distance for both customers and subscribers, it confirms what we previously saw with latitude and longitude: subscribers tend to do shorter rides.
+If we plot the distribution of distance for both customers and subscribers, it confirms what we previously saw with latitude and longitude: subscribers tend to do shorter rides (in terms of distance).
 
 
-Therefore, this discrepancy between subscribers and customers shows that there are two different ways of using citibikes: small short rides or more length rides, and it confirms that citibikes are not only used by tourists, but also by new yorkers as a way of commuting.
+Therefore, there is a genuine discrepancy between subscribers and customers which attest that there are two different ways of using citibikes: short rides or more lengthy rides, and it confirms that citibikes are not only used by tourists, but also by new yorkers as a way of commuting.
