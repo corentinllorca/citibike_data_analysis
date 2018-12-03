@@ -27,6 +27,11 @@ df <- df %>% filter(!is.na(`start station id`))
 df$gender <- factor(df$gender)
 levels(df$gender) <- c("Missing", "Male", "Female")
 
+# turning birth date into age
+df$age <- 2018 - df$'birth year'
+df <- select(df, -'birth year')
+
+
 # write new cleaned data
 
 write_csv(as.data.frame(df), 'data/concise_trips_cleaned.csv')

@@ -14,15 +14,10 @@ knitr::opts_chunk$set(message = FALSE,
 
 ```{r}
 library(tidyverse)
-data <- read_csv("../data/2018-feb-jul-oct-citibike-trips.csv")
+data <- read_csv("../data/concise_trips_cleaned.csv")
 ```
 
 ## Who uses Citi Bike ?
-
-
-### A brief demographic study of Citi Bike users : age and gender
-
-The Citi Bike public database contains informations about the age and gender of the users. However, that is only the case for users with the subscriptions, as simple customers with short-term passes aren't required to fill in any information. Still, we have seen that subscriber trips represented about 90% of all trips, so the following studies on age and gender can be safely extended to the whole user base of Citi Bike.
 
 
 ### Customers and Subscribers, and their usage of Citi Bike
@@ -83,11 +78,12 @@ p6 <- ggplot(data,
                      as.numeric(format(data$starttime,"%M"))/60 +
                      as.numeric(format(data$starttime,"%S"))/3600,
                  color = usertype)) + 
-      geom_density() +  
+      geom_density() +
       ggtitle("Repartition of trip times for each user type") + 
       xlab("Hour of the day") + ylab("Density") + 
       scale_x_continuous(breaks = seq(0,24,4)) +
-      scale_color_discrete(name = "User type")
+      scale_color_discrete(name = "User type") +
+      geom_hline(yintercept = 0, color = 'white')
 p6
 ```
 
@@ -139,10 +135,87 @@ p8 <- ggplot(data,
 p8
 ```
 
-First of all, we get a confirmation that the average trip is longer for customers than for subscribers. 
+First of all, we get a confirmation that the average trip is longer for customers than for subscribers. Other than that, we can't see that much on this plot, since the trip durations are mostly similar throughout the day; however, we do notice two small modes around commuting hours for subscribers, indicating that their trips to commute might be longer than their trips during the rest of the day. As for customers, we see that their trip are longest between 10 a.m. and 6 p.m., which corresponds to the times at which tourists might use Citi Bike to wander around the city without really caring for getting from point A to point B.
 
-### A brief demographic study of Citi Bike users : age and gender
+### Age and gender of users 
 
 The Citi Bike public database contains informations about the age and gender of the users. However, that is only the case for users with the subscriptions, as simple customers with short-term passes aren't required to fill in any information. Still, we have seen that subscriber trips represented about 90% of all trips, so the following studies on age and gender can be safely extended to the whole user base of Citi Bike.
 
-Let's first show some simple plots. Let's look
+As found in our data cleaning, there is a lot of missing data on gender, and there are a lot of outliers and wrong-looking data on age. For this section, we will then be using a reduced version of the trip database. The data we'll be excluding will be the trips for which the gender is not filled in, and those for which the user is older than 80 years old. We also had a problem with the birth year 1969 (age 49) being over-represented, but let's see if removing the data in which gender is missing solves the problem. We first apply our filter, then plot a histogram of user age, with age 49 being highlighted.
+
+```{r}
+data_ag <- data %>% 
+            filter(gender != 'Missing') %>% 
+            filter(age < 81)
+```
+
+```{r}
+p81 <- ggplot(data_ag[data_ag$age!=49,], aes(x = age)) + 
+       geom_histogram(fill = "orange", color = 'black', binwidth = 1) + 
+       geom_histogram(data = data_ag[data_ag$age == 49,],
+                      fill = "dark green", color = "black",
+                      binwidth= 1) +
+       xlab("Age") + ylab("Count") + 
+       ggtitle("Distribution of age without missing gender data")
+
+p81
+```
+
+We see, indeed, that the 1969 anomaly is removed when we exclude data in which gender is missing. This could be explained by the fact that people who don't fill out their gender might be the same people who would leave the default birth year when subscribing. We'll continue on with that data for this section.
+
+Let's first display a stacked bar chart displaying the age repartition, but separated between men and women.
+
+```{r}
+p82 <- ggplot(data_ag, aes(x = age, fill = gender)) + 
+       geom_histogram(color = 'black', binwidth = 1) + 
+       xlab("Age") + ylab("Count") + 
+       ggtitle("Distribution of age for men and women")
+
+p82
+```
+We see that a majority of users in terms of gender are men, and in terms of age, most users are between 20 and 50. Moreover, almost all users above the age of 70 are men - which is especially significant when you consider the fact that women have a higher life expectancy on average, meaning that there are much more women than men above the age of 70.
+
+Let's now check if we notice any difference in the times at which the trips are taken depending on the gender of the user.
+
+```{r}
+
+p9 <- ggplot(data_ag,
+             aes(x = as.numeric(format(data_ag$starttime,"%H")) +
+                     as.numeric(format(data_ag$starttime,"%M"))/60 +
+                     as.numeric(format(data_ag$starttime,"%S"))/3600,
+                 color = gender)) + 
+      geom_density() +  
+      ggtitle("Repartition of trip times for each gender") + 
+      xlab("Hour of the day") + ylab("Density") + 
+      scale_x_continuous(breaks = seq(0,24,4)) +
+      scale_color_discrete(name = "User type") +
+      geom_hline(yintercept = 0, color = 'white')
+p9
+```
+We don't see any difference between the daily trip times of men and women. This points towards the fact that women commute as much as men in New York City. Let's now look at the repartition of trip times depending on the age of the user : in order to do that, we plot the density of daily trip time for each possible age of the user rounded to the nearest decade. 
+
+```{r}
+library(ggthemes)
+p10 <- ggplot(data_ag,
+             aes(x = as.numeric(format(data_ag$starttime,"%H")) +
+                     as.numeric(format(data_ag$starttime,"%M"))/60 +
+                     as.numeric(format(data_ag$starttime,"%S"))/3600,
+                 color = factor(floor(data_ag$age/10)*10))) + 
+       geom_density() +
+       scale_colour_colorblind(name = "Age (decade)") +
+       ggtitle("Repartition of daily trip times depending on age (decade)") + 
+       xlab("Hour of the day") + ylab("Density") + 
+       scale_x_continuous(breaks = seq(0,24,4)) +
+       geom_hline(yintercept = 0, color = 'white')
+p10
+```
+
+Here, we see what we expected to see : users from 20 to 60 generally use Citi Bikes to commute, as evidenced by the modes around 8 a.m. and 6 a.m., but people in their 70s and 80s, who are generally retired, use Citi Bike for leisure a lot more. Moreover, teenagers using Citi Bike tend to travel more at night (9 p.m. to 4 a.m.) than others, while being much less active in the morning - which indeed sounds a lot like teenagers.
+
+We now want to look at the difference in speed between people of different ages and genders. In order to do that, we add a "speed" column, which corresponds to the distance divided by the trip duration. The speed is then in m/s. 
+```{r}
+data$speed <- data$distance/data$tripduration
+``` 
+
+
+Todo : avg speed per age with separation of genders
