@@ -73,7 +73,7 @@ First of all, we can visualize the stations that are the most 'active': those ar
 
 ```{r warning=FALSE, comment=FALSE,echo=FALSE,cache=FALSE, results=FALSE, comment=FALSE, warning=FALSE,message=FALSE}
 
-apiKey <- 'AIzaSyBlArTIZYpahLCoMaIdV4pQn1GxCHk9XR8'
+apiKey <- '******'
 register_google(apiKey, account_type = "premium", day_limit = 100000)
 ```
 ```{r warning=FALSE, comment=FALSE,echo=FALSE,results=FALSE,error=FALSE}
