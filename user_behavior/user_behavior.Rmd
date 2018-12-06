@@ -79,10 +79,10 @@ p6 <- ggplot(data,
                      as.numeric(format(data$starttime,"%S"))/3600,
                  color = usertype)) + 
       geom_density() +
-      ggtitle("Repartition of trip times for each user type") + 
+      ggtitle("Daily repartition of trip times for each user type") + 
       xlab("Hour of the day") + ylab("Density") + 
       scale_x_continuous(breaks = seq(0,24,4)) +
-      scale_color_discrete(name = "User type") +
+      scale_color_colorblind(name = "User type") +
       geom_hline(yintercept = 0, color = 'white')
 p6
 ```
@@ -192,7 +192,9 @@ p9 <- ggplot(data_ag,
       geom_hline(yintercept = 0, color = 'white')
 p9
 ```
-We don't see any difference between the daily trip times of men and women. This points towards the fact that women commute as much as men in New York City. Let's now look at the repartition of trip times depending on the age of the user : in order to do that, we plot the density of daily trip time for each possible age of the user rounded to the nearest decade. 
+We don't see any difference between the daily trip times of men and women, which points towards the fact that women commute as much as men in New York City. The only difference we might notice is that women are more active during the day, while men are more active in the evening and at night. 
+
+Let's now look at the repartition of trip times depending on the age of the user : in order to do that, we plot the density of daily trip time for each possible age of the user rounded to the nearest decade. 
 
 ```{r}
 library(ggthemes)
@@ -202,7 +204,7 @@ p10 <- ggplot(data_ag,
                      as.numeric(format(data_ag$starttime,"%S"))/3600,
                  color = factor(floor(data_ag$age/10)*10))) + 
        geom_density() +
-       scale_colour_colorblind(name = "Age (decade)") +
+       scale_color_brewer(name = "Age(decade)") +
        ggtitle("Repartition of daily trip times depending on age (decade)") + 
        xlab("Hour of the day") + ylab("Density") + 
        scale_x_continuous(breaks = seq(0,24,4)) +
@@ -214,7 +216,7 @@ Here, we see what we expected to see : users from 20 to 60 generally use Citi Bi
 
 We now want to look at the difference in speed between people of different ages and genders. In order to do that, we add a "speed" column, which corresponds to the distance divided by the trip duration. The speed is then in m/s. 
 ```{r}
-data$speed <- data$distance/data$tripduration
+#data$speed <- data$distance/data$tripduration
 ``` 
 
 

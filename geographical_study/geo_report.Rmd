@@ -7,18 +7,26 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(readr)
+library(dplyr)
+library(sp)
+library(plyr)
+library(ggmap)
+library(ggplot2)
+library(stringr)
+library(geosphere)
+library(lubridate)
+library(extracat)
+```
+
 ## Are there some geographical trends to the use of citibikes ?
 
 In this part, we will try to identify geographical trends to try and understand what use people have of the cibibikes. Based on New York geography and its subway tracks, we expect to find some proofs that citibikes are a means of transportation for routes that are harder to do with subways, for instance East-West commutation. Furthermore, we will try to identify trends that shows that bikes are both a recreational and a practical way of commuting in New York. For the following study, we will focus on geograpical features, such as the station locations, as well as the route and the distance done by users (we do discard any seasonality effect by aggregating over the study over the 3 months we chose previously).
 
 
 ```{r, comment=FALSE, message=FALSE,warning=FALSE,echo=FALSE}
-library(readr)
-library(sp)
-library(plyr)
-library(dplyr)
-library(ggmap)
-library(ggplot2)
+
 concise_trips <- read_csv("../concise_trips.csv")
 colnames(concise_trips)[4] <- 'start_station_id'
 colnames(concise_trips)[5] <- 'end_station_id'
@@ -217,7 +225,6 @@ It reveals that subscribers and customers have a different use of the citibikes:
 
 
 ```{r warning=FALSE,echo=FALSE}
-library(geosphere)
 concise_trips$distance <- distGeo (matrix(c(concise_trips$latitude.x,concise_trips$longitude.x),ncol = 2),
                                    matrix(c(concise_trips$latitude.y, concise_trips$longitude.y),ncol = 2))
 concise_trips <- subset(concise_trips,
