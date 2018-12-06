@@ -73,7 +73,7 @@ First of all, we can visualize the stations that are the most 'active': those ar
 
 ```{r warning=FALSE, comment=FALSE,echo=FALSE,cache=FALSE, results=FALSE, comment=FALSE, warning=FALSE,message=FALSE}
 
-apiKey <- '******'
+apiKey <- 'AIzaSyBlArTIZYpahLCoMaIdV4pQn1GxCHk9XR8'
 register_google(apiKey, account_type = "premium", day_limit = 100000)
 ```
 ```{r warning=FALSE, comment=FALSE,echo=FALSE,results=FALSE,error=FALSE}
@@ -116,37 +116,47 @@ concise_trips_merged_shorted['to'] <- paste(concise_trips_merged_shorted$latitud
                                             concise_trips_merged_shorted$longitude.y)
 
 ```
-```{r  width=8, height=10, cache=FALSE, results=FALSE, comment=FALSE, warning=FALSE,message=FALSE,echo=FALSE}
+
+```{r}
+head(concise_trips_merged_shorted)
+```
+
+
+```{r  width=8, height=10, cache=FALSE, results=FALSE, comment=FALSE, warning=FALSE,message=FALSE,echo=FALSE,fig.width=10, fig.height=17}
 library(stringr)
 options(expressions=10000)
+
+subscriber <- read_csv("concise_trips_merged_shorted_subscriber.csv")
+customer <- read_csv("concise_trips_merged_shorted_customer.csv")
 
 nyc_base <- ggmap::get_map(location = c(long = -73.97634,lat = 40.75000),
                            zoom=12,color='bw',maptype = 'terrain')
 nyc_base <- ggmap(nyc_base)
 
 
-leg <-function(start, dest,n){
-    if(n< 10){
+leg <-function(start, dest,n,color_path){
       size_value <- 0.8
       alpha_value <- 0.8
-      color <- 'blue'}
-    else{
-      size_value <- 0.5
-      alpha_value <- 0.3
-      color <- 'blue'
-    }
+      color <- color_path
     
     r<- route(from=start,to=dest,mode = c("bicycling"),structure = c("route"))  
-    c<- geom_path(aes(x = lon, y = lat),
-             alpha = alpha_value,size = size_value,  data = r, colour = color) 
+    c<- geom_path(aes(x = lon, y = lat,color=color),
+             alpha = alpha_value,size = size_value,  data = r) 
     return (c)
 }
 
 base <- nyc_base
 
- for (n in 1:300){
+ for (n in 1:150){
  
-     l<-leg(str_replace_all(concise_trips_merged_shorted$from[n], " ", ""), str_replace_all(concise_trips_merged_shorted$to[n], " ", ""),n) 
+     l<-leg(str_replace_all(subscriber$from[n], " ", ""), str_replace_all(subscriber$to[n], " ", ""),n,'#e69f00') 
+     
+     base<-base+l
+ }
+
+ for (n in 1:150){
+ 
+     l<-leg(str_replace_all(customer$from[n], " ", ""), str_replace_all(customer$to[n], " ", ""),n,'black') 
      
      base<-base+l
  }
@@ -157,7 +167,7 @@ base+
   xlab("Latitude")+
   ylab("Longitude")+
   ggtitle("The most frequent trips around New York City")+
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5)) + scale_color_discrete(labels = c("Subscriber", "Customers"))+theme_bw(30)
 ```
 
 The above map provides some interesting information:
