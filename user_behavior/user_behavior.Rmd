@@ -22,6 +22,8 @@ data <- read_csv("../data/concise_trips_cleaned.csv")
 
 ### Customers and Subscribers, and their usage of Citi Bike
 
+There are significantly more Subscribers (year-long subscribers) than Customers (Pass or Single Trip users). This will be interesting when we try to figure out commuters v. tourists habits and differences in Citibike usage.
+
 Here, we will be looking at the "Customer Type" variable in the trip database. It is an unordered factor corresponding to the type of customer having taken the trip. The different levels are "Customer" and "Subscriber". The Customers are defined as the people using a 1 or 3 day pass, thus more likely to be occasional users, and the Subscribers are those with the annual pass, thus more likely to be regular users. 
 
 The two levels are highly unbalanced, as we can see below : 
@@ -138,6 +140,11 @@ p8
 First of all, we get a confirmation that the average trip is longer for customers than for subscribers. Other than that, we can't see that much on this plot, since the trip durations are mostly similar throughout the day; however, we do notice two small modes around commuting hours for subscribers, indicating that their trips to commute might be longer than their trips during the rest of the day. As for customers, we see that their trip are longest between 10 a.m. and 6 p.m., which corresponds to the times at which tourists might use Citi Bike to wander around the city without really caring for getting from point A to point B.
 
 ### Age and gender of users 
+
+
+The distribution shows that there are few users under 20 and a long tail peaking around 25 (the age depends on the time of registration so this is a rough estimate based on the fact that Citibike exists since 2013). We expected fewer adults over 60 to use Citibike.
+
+There are significantly more males using Citibike than females. We will keep this in mind as it might provide insight in some findings. 
 
 The Citi Bike public database contains informations about the age and gender of the users. However, that is only the case for users with the subscriptions, as simple customers with short-term passes aren't required to fill in any information. Still, we have seen that subscriber trips represented about 90% of all trips, so the following studies on age and gender can be safely extended to the whole user base of Citi Bike.
 
