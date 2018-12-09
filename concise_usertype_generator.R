@@ -51,9 +51,6 @@ colnames(most_active)[4] <- 'longitude'
 
 
 
-# 1) Most active stations
-
-#First of all, we can visualize the stations that are the most 'active': those are the stations that have the highest traffic of citibikes (in terms of start and end for each station).
 
 apiKey <- 'AIzaSyBlArTIZYpahLCoMaIdV4pQn1GxCHk9XR8'
 register_google(apiKey, account_type = "premium", day_limit = 100000)
@@ -77,5 +74,7 @@ concise_trips_merged_shorted['from'] <- paste(concise_trips_merged_shorted$latit
                                               concise_trips_merged_shorted$longitude.x)
 concise_trips_merged_shorted['to'] <- paste(concise_trips_merged_shorted$latitude.y,',',
                                             concise_trips_merged_shorted$longitude.y)
+
+#AGAIN : CHOOSE EITHER SUBSCRIBER OR CUSTOMER IN THE FILE NAME
 
 write.csv(concise_trips_merged_shorted, file = "data/concise_trips_merged_shorted_subscriber.csv")

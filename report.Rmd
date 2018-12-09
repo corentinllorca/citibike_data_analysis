@@ -16,15 +16,14 @@ knitr::opts_chunk$set(message = FALSE,
 
 
 ```{r}
-library(readr)
 library(dplyr)
+library(readr)
 library(sp)
 library(ggmap)
 library(ggplot2)
 library(stringr)
 library(geosphere)
 library(lubridate)
-library(extracat)
 library(viridis)
 library(ggthemes)
 library(stringr)
@@ -52,28 +51,34 @@ All of those steps were stored in a script called preprocessing.R, which should 
   
 Please be careful as the R working directory must be changed to the directory containing this file, the script and the data folder.
 
+The script is available in [the project's GitHub](https://github.com/corentinllorca/edav_fall_2018).
+
+The files that are produced by the script are the following : 
+
+* "concise_trips.csv" for the February, July and October 2018 trip data
+* "concise_weather.csv" for the weather data 
+* "summary_stats_per_day.csv" for the daily ridership and membership data 
+* "stations_info.csv" for the stations info data
+ 
 
 # III. Analysis of data quality
 
 Before conduction any exploratory analysis we need to assess data quality. A quick survey of the weather data reveals that the data is tidy, with no outliers and no missing values. 
 
-```{r}
-# Import the data
-non_clean_df <- read_csv("data/2018-feb-jul-oct-citibike-trips.csv", col_types = 'iTTicnnicnnici?')
-```
 
 The trip data fetched from February, July and October 2018 on the other hand has a few notable mishaps. The coding for categorical data is consistent - no multiple codings for the same item - and the data dictionary available online explains each individual variable clearly as well as the levels of categorical variables.
+
+```{r}
+# Import the data : we import the trip data concatenated, but not yet cleaned
+non_clean_df <- read_csv("data/2018-feb-jul-oct-citibike-trips.csv", col_types = 'iTTicnnicnnici?')
+```
 
 ## 1. Missing data
 
 We started data quality analysis by looking at the **missing data patterns**.
 
-```{r}
-library(extracat)
-```
-
 ```{r, fig.width = 6, fig.height = 3}
-visna(non_clean_df)
+extracat::visna(non_clean_df)
 ```
 
 The only missing data pattern apart from no missing data appears to be missing ids for the start and end stations. The first question we asked ourselves when seeing this is: **why is only the id of the station missing and not the station name or longitude/latitude**?
@@ -133,16 +138,12 @@ To get a better idea of the data at hand we decided to also include the **distri
 ### 3.1. Gender
 
 ```{r}
-library(ggplot2)
-```
-
-```{r}
 non_clean_df$gender <- factor(non_clean_df$gender)
 levels(non_clean_df$gender) <- c("Missing", "Male", "Female")
 ```
 
-```{r, fig.width = 6, fig.height = 2.5}
-ggplot(non_clean_df, aes(x = gender)) + geom_bar(fill = "lightblue") + xlab("") + theme_bw()
+```{r}
+ggplot(non_clean_df, aes(x = gender)) + geom_bar(fill = "lightblue") + xlab("")
 ```
 
 Again we see there is a significant number of missing gender values.
@@ -151,8 +152,8 @@ We could make the observation that users can input whichever gender they wish, t
 
 ### 3.2. User status
 
-```{r, fig.width = 6, fig.height = 2.5}
-ggplot(non_clean_df, aes(x = usertype)) + geom_bar(fill = "maroon") + xlab("") + theme_bw()
+```{r}
+ggplot(non_clean_df, aes(x = usertype)) + geom_bar(fill = "maroon") + xlab("")
 ```
 
 We don't notice any anomalies here. The Subscriber / Customer status is a feature that's always going to have a value, and that won't have many errors, since the Citi Bike system knows which type of user is using the bike when one is rented - it isn't a value that depends on the user entering it. 
@@ -165,14 +166,22 @@ After removing outliers as discussed above:
 non_clean_df <- non_clean_df %>% filter(non_clean_df$`birth year` > 1937)
 ```
 
-```{r, fig.width = 6, fig.height = 2.5}
-ggplot(non_clean_df, aes(x = `birth year`)) + geom_histogram(fill = "orange", color = 'white', binwidth = 1) + xlab("") + theme_bw()
+```{r}
+ggplot(non_clean_df, aes(x = `birth year`))+ 
+  geom_histogram(fill = "orange", color = 'white', binwidth = 1) + 
+  xlab("Birth year") 
 ```
 
 The first thing we notice is the outlier value for 1969. We think this might have been the default age value for which users did not have to interact with the system to change their age. Many would have agreed to that value without a second glance. Any analysis based on the age of users or their birth years will take this into account, probably by altogether ignoring this value since it probably includes data for all ages. 
 
 
-The data cleaning steps that we have selected (removing short and long trips, assigning more explicit values to genders, removing dockless bikes and turning birth date to age) can be executed by running the data_cleaning.R script. Again, the script must be placed in the same directory as the "data" folder previously mentioned, and R's current directory must be set to that same directory. The output file for the trip data is then "data_concise_cleaned.R".
+The data cleaning steps that we have selected (removing short and long trips, assigning more explicit values to genders, removing dockless bikes and turning birth date to age) can be executed by running the data_cleaning.R script. Again, the script must be placed in the same directory as the "data" folder previously mentioned, and R's current directory must be set to that same directory. The script is available in [the project's GitHub](https://github.com/corentinllorca/edav_fall_2018).
+
+The output file for the trip data is then "data_concise_cleaned.csv".
+
+```{r}
+rm(non_clean_df)
+```
 
 # IV. Exploratory Data Analysis
 
@@ -181,31 +190,134 @@ Let's first load the data we will need :
 * The trip data file for Feb-Jul-Oct 2018 
 
 ```{r}
-trips <- read_csv("../data/concise_trips_cleaned.csv")
+trips <- read_csv("./data/concise_trips_cleaned.csv")
 ```
 
 * The daily ridership and membership summary data 
 
 ```{r}
-daily <- read_csv("../data/summary_stats_per_day.csv")
+daily <- read_csv("./data/summary_stats_per_day.csv")
 ```
 
 * The stations info 
 
 ```{r}
-stations <- read_csv("../stations_info.csv")
+stations <- read_csv("./data/stations_info.csv")
 ```
 
 * The weather data 
 
 ```{r}
-weather <- read_csv("../data/concise_weather.csv")
+weather <- read_csv("./data/concise_weather.csv")
 ```
 
+The aim of the exploratory data analysis step is to gain insight on the general question of "How do people use Citi Bike ?". This includes looking at the general behavior of the users against outside parameters like seasons, days of the week, weather, etc.; byt also looking at the different user types for the bike sharing system, and checking whether they have different behaviors in similar outside circumstances. 
 
-## 4. The effect of weather on Citi Bike users
+## 1. General usage trends through time
 
-Surely people's use of Citi Bikes is greatly dependent on weather conditions: there will probably be a lot less trips on rainy days than on dry days, the more snow on the ground the less likely people are to rent a bike. Those are hypotheses that we want to test through exploration of the data collected from the Central Park weather station and Citibike's data.
+In this part, we aim to briefly showcase some general trends depending on time. We'll plot the distribution of trips taken on three different scales : yearly, weekly and daily. This will serve as baseline information for the rest of the project, and will be expanded in later parts. 
+
+### 1.1. Yearly trends 
+
+First of all, let's simply plot the number of trips taken per day across all the daily data that we have. 
+
+```{r}
+p11 <- ggplot(daily, aes(x = Date, y = Trips)) + 
+       geom_line(color = "steel blue") + 
+       scale_x_date(breaks = "6 months", date_labels = "%b %Y") + 
+       theme(plot.title = element_text(hjust = 0.5)) + 
+       ggtitle("Evolution of daily number of trips")
+
+p11
+rm(p11)
+```
+
+This curve is mostly unreadable, so we've decided to replace it with a smoother that could show us some yearly trends. We used a loess smoother, and toyed around with the span until the curved was smooth enough while still displaying detailed trends.
+
+```{r}
+p12 <- ggplot(daily, aes(x = Date, y = Trips)) + 
+       geom_smooth(color = "steelblue", method = "loess", span = 0.05) + 
+       scale_x_date(breaks = "6 months", date_labels = "%b %Y") + 
+       theme(plot.title = element_text(hjust = 0.5)) + 
+       ggtitle("Evolution of daily number of trips (smoothed)")
+
+p12
+rm(p12)
+```
+
+As expected Winter months have much fewer trips than the Summer months, on which the number of trips peak. The number of trips was lowest in February 2015 - around 8,000 daily trips - and highest in June 2018 - around 67,000 daily trips. There is no denying there is an overall global increasing trend, as well as a seasonal component. 
+
+One might wonder what the sharp increases between August 2015 and September 2015, July 2016 and September 2016 represent. We looked into it and found that those were critical months for Citibike that saw the deployment of a large number of bikes and new stations as part of their expansion plan. This probably led more people to at least try the bikes from new stations close to their home.
+
+### 1.2. Weekly trends
+
+Let's now look at the distribution of the number of rides according to the day of the week : we're looking for a distinction between the weekend and the weekdays. 
+
+```{r}
+
+p13 <- ggplot(trips,aes(x = format(trips$starttime,"%A"))) + 
+       geom_bar(color = 'black', fill = 'turquoise') + 
+       ggtitle("Number of trips taken for each day of the week") + 
+       xlab("Weekday") + ylab("Count") + 
+       scale_x_discrete (limits = 
+           c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")) + 
+       theme(plot.title = element_text(hjust = 0.5))
+p13
+rm(p13)
+```
+
+Surprisingly enough, there are less people cycling on the weekends than during the week. We would have expected people to be getting out more during the weekend, which would have meant using Citi Bike more to get around the city. However, the higher number of trips taken during the week might point to a large number of people using Citi Bike to commute. 
+
+### 1.3. Daily trends
+
+Finally, for the last plot of this part, let's plot the density distribution of the time of day at which trips are taken. Here, we use the starting time of the trip as our data, and plot its density. We're hoping for our commuting hypothesis to be confirmed.
+
+```{r}
+
+p14 <- ggplot(trips,
+             aes(x = as.numeric(format(trips$starttime,"%H")) +
+                     as.numeric(format(trips$starttime,"%M"))/60 +
+                     as.numeric(format(trips$starttime,"%S"))/3600)) + 
+       geom_density() +
+       ggtitle("Daily repartition of trip times") + 
+       xlab("Hour of the day") + ylab("Density") + 
+       scale_x_continuous(breaks = seq(0,24,4)) +
+       geom_hline(yintercept = 0, color = 'white') + 
+       theme(plot.title = element_text(hjust = 0.5))
+p14
+rm(p14)
+```
+
+And, indeed, our hypothesis gets confirmed : there is a large part of the user base that uses Citi Bike for commuting, as evidenced by the two clear modes of the repartition of daily trip times, around the traditional commuting hours of 8 am and 6 pm. In order to strenghten that hypothesis, we also want to display the same plot, but faceted between weekdays and the weekend. We expect the modes to be less apparent in the density for the weekend. 
+
+```{r}
+weekend = c("Saturday","Sunday")
+
+p15 <- ggplot(trips,
+             aes(x = as.numeric(format(trips$starttime,"%H")) +
+                     as.numeric(format(trips$starttime,"%M"))/60 +
+                     as.numeric(format(trips$starttime,"%S"))/3600,
+                 color = format(trips$starttime,"%A") == weekend)) + 
+       geom_density() +
+       ggtitle("Daily repartition of trip times (weekend vs rest of the week)") + 
+       xlab("Hour of the day") + ylab("Density") + 
+       scale_x_continuous(breaks = seq(0,24,4)) +
+       geom_hline(yintercept = 0, color = 'white') + 
+       theme(plot.title = element_text(hjust = 0.5)) + 
+       scale_color_discrete(name = "Is it the weekend ?")
+p15
+rm(p15)
+```
+
+Indeed, we can see that the modes are much less present during the weekend - even invisible - thus confirming that they correspond to commuting. Instead, we get an unimodal curve with a flat mode from 1 pm to 5 pm approximately. Moreover, we can observe that people bike more at night during the weekend. 
+
+In this part, we have gained the insight that a majority of Citi Bike users use the system in order to go to work every day, as well as observing that there are a lot less people using the system in the winter. We'll keep that in mind as we go through the rest of our research.
+
+## 2. The effect of weather on Citi Bike users
+
+Here, we want to look at some more general trends that may affect all Citi Bike users. Surely people's use of Citi Bikes is greatly dependent on weather conditions: there will probably be a lot less trips on rainy days than on dry days, the more snow on the ground the less likely people are to rent a bike. Those are hypotheses that we want to test through exploration of the data collected from the Central Park weather station and Citibike's data.
+
+### 2.1 The effect of rain
 
 We will first explore how the number of trips varies with the precipitation level. The data used here is the number of trips and precipitation level in inches from October 2014 (included) until October 2018 (not included).
 
@@ -217,7 +329,7 @@ weather$prep_factor2 <- round(weather$PRCP, 2)
 ```
 
 ```{r}
-colnames(data)[1] <- "DATE"
+colnames(daily)[1] <- "DATE"
 ```
 
 ```{r}
@@ -229,20 +341,17 @@ dw1 <- data_weather %>% group_by(prep_factor) %>% summarize(avg_trips = mean(Tri
 ```
 
 ```{r, warning = F, fig.height = 4, fig.width = 7}
-pl <- ggplot(data = dw2, aes(x = prep_factor, y = avg_trips / 1000))+ 
-      geom_point(color = "royalblue") + xlim(0, 1.5) + 
-      ggtitle("The decreasing trend of number of trips with precipitation level") + 
-      ylab("Average daily trips (in thousands)") + 
-      xlab("Daily precipitation (inches)") + 
-      geom_smooth(method = "lm", se = F, color = "darkblue") + 
-      theme(plot.title = element_text(hjust = 0.5))
+p21 <- ggplot(data = dw1, aes(x = prep_factor, y = avg_trips / 1000))+ 
+       geom_point(color = "royalblue") + xlim(0, 1.5) + 
+       ggtitle("The decreasing trend of number of trips with precipitation level") + 
+       ylab("Average daily trips (in thousands)") + 
+       xlab("Daily precipitation (inches)") + 
+       geom_smooth(method = "lm", se = F, color = "darkblue") + 
+       theme(plot.title = element_text(hjust = 0.5))
 
-pl
+p21
+rm(p21)
 ```
-
-\begin{center}
-\it{Fig 4.1. The average daily number of trips against the precipitation level (bucketed with a binwidth of 0.1 inch)}
-\end{center}
 
 \bigskip
 
@@ -254,7 +363,7 @@ The plot suggests that some people either aren't phased by rain very much or tha
 
 We will proceed to test this hypothesis in the following, for the months of February, July and October 2018 for which we have data on every trip - including the exact timing within the day.
 
-**Does precipitation affect the number of trips decrease similarly during morning rush hour and across the weekend ?**
+### 2.2 Does rain have the same effect on usage during the weekend and during the week's rush hours ?
 
 We plotted the average number of trips against precipitation, distinguishing trips done during morning rush hour and trips done during the weekend. The aim here is to check whether Citi Bike users are more discouraged by precipitation when taking trips during the weekend, which would correspond to leisure trips.
 
@@ -302,20 +411,18 @@ dw4 <- rbind(dw2,dw3)
 ```
 
 ```{r, warning = F, message = F, fig.height = 4, fig.width = 7}
-p2 <- ggplot(data = dw4, aes(x = PRCP, y = avg_trips / 1000)) + 
-      ggtitle("Commuters are less phased by rain")+ 
-      ylab("Average daily trips (in thousands)") + 
-      xlab("Daily precipitation (inches)") + xlim(0,0.08) + 
-      geom_smooth(method = "loess", se = F, color = "darkblue") + 
-      theme(plot.title = element_text(hjust = 0.5)) + 
-      geom_vline(xintercept = 0.01, color = "darkred") + 
-      facet_wrap(~when)
-p2
+p22 <- ggplot(data = dw4, aes(x = PRCP, y = avg_trips / 1000)) + 
+       ggtitle("Commuters are less phased by rain")+ 
+       ylab("Average daily trips (in thousands)") + 
+       xlab("Daily precipitation (inches)") + xlim(0,0.08) + 
+       geom_smooth(method = "loess", se = F, color = "darkblue") + 
+       theme(plot.title = element_text(hjust = 0.5)) + 
+       geom_vline(xintercept = 0.01, color = "darkred") + 
+       facet_wrap(~when)
+p22
+rm(p22)
 ```
 
-\begin{center}
-\it{Fig 4.2. The average daily number of trips against the precipitation level faceted on day of the week (distinguishing weekdats and weekends). The red vertical lines are drawn for inch = 0.01, to highlight behaviour of riders from no rain (inch = 0) to a drizzle - which some might see as a sign of more rain to come.}
-\end{center}
 
 \bigskip
 
@@ -325,44 +432,572 @@ On the other hand, tourists and bikers for fun on the weekends probably expect t
 
 Commuters are rapidly discouraged by the rain starting at 0.02 inches until 0.05 inches. There aren't too many days with more precipitation in our data so the following increasing slope could very well just be an artefact of overfitting the little data available.
 
-**Are visitors sensitive to temperature? How does temperature impact 24 hour passes sales?**
+### 2.3. Are visitors sensitive to temperature? How does temperature impact 24 hour passes sales?
 
 After examining the effect of precipitation on the number of trips by Citibike users we will turn to the effect of another climatic feature which we believe might have a significant impact on riding patterns: temperature. We will focus on whether temperature affects the number of 24-hour passes bought each day. Those are mostly purchased by tourists and therefore, we expect our exploration to help us gain new understanding of how New York City visitors use the ride share network.
 
 \bigskip
 
 ```{r}
-dw1 <- dw1 %>% filter(!is.na(dw1$`24 Hour Passes`))
+data_weather <- data_weather %>% filter(!is.na(data_weather$`24 Hour Passes`))
 ```
 
 ```{r}
-dw1$temp_factor <- cut(x = dw1$TMAX, breaks = seq(0, 100, 3))
-levels(dw1$temp_factor) <- seq(0, 96 ,3)
+data_weather$temp_factor <- cut(x = data_weather$TMAX, breaks = seq(0, 100, 3))
+levels(data_weather$temp_factor) <- seq(0, 96 ,3)
 ```
 
 ```{r}
-dw5 <- dw1 %>% group_by(temp_factor) %>% summarize(avg_sold = mean(`24 Hour Passes`))
-dw5$temp_factor <- as.integer(as.character(d$temp_factor))
+dw5 <- data_weather %>% group_by(temp_factor) %>% summarize(avg_sold = mean(`24 Hour Passes`))
+dw5$temp_factor <- as.integer(as.character(dw5$temp_factor))
 ```
 
 ```{r, fig.height = 4, fig.width = 7}
-p3 <- ggplot(dw5, aes(temp_factor, avg_sold)) + geom_col(fill = "aquamarine4") + 
+p23 <- ggplot(dw5, aes(temp_factor, avg_sold)) + geom_col(fill = "aquamarine4") + 
        xlab("Temperature (°F)") + ylab("Average number of 24 Hour Passes sold") + 
        ggtitle("Sales thaw as temperature increases") + 
        theme(plot.title = element_text(hjust = 0.5))
 
-p3
+p23
+rm(p23)
 ```
 
-\begin{center}
-\it{Fig 4.3. The average number of 24 Hour Passes sold by buckets of temperature (of size 3 degrees Fahrenheit)}
-\end{center}
 
 \bigskip
 
 We see that as temperature increase from 12 degrees to around 80 degrees, average sales of 24 hour passes increase (first slowly, and then more rapidly). We expected low sales for low temperatures as fewer people venture out in the cold and riding in the cold can worsen its effects by amplifying wind speed. Furthermore, snow is often associated with low very low temperatures, which makes biking around the city even more unpractical. 
 
 Use of Citi bikes starts to decrease around 80 degrees, with extreme temperatures seemingly yielding less 24 Hour passes: visitors are less likely to bike under the harsh Summer New York sun. Although this could also be a discrepancy due to the lack of sufficient data for those hot days that are in small numbers across the five last years compared to the other temperature bins.
+
+```{r}
+rm(data_weather,dw1,dw2,dw3,dw4,dw5)
+```
+
+
+## 3. Age and gender : the demographics of Citi Bike users 
+
+Our next analysis will be to look at the age and gender of Citi Bike users. Please note that user information is only required within the yearly subscription plan, meaning that the data that will be shown in this part will only be the trips done by subscribers. However, those represent about 90% of all trips, so there should be no issue in generalizing the insights gained here. 
+
+### 3.1. Anomalies in the data
+
+A big issue with this data is that the users making the trips aren't individually identified, meaning that what we're plotting isn't the age/gender distribution of Citi Bike subscibers, but rather the number of trips taken by people from each individual age/gender. Getting for instance a high count for men compared to women doesn't necessarily mean that there are more men than women using Citi Bike, but rather that there are more trips being taken by men than women.
+
+As found in our data cleaning, there is a lot of missing data on gender, and there are a lot of outliers and wrong-looking data on age. For this section, we will then be using a reduced version of the trip database. The data we'll be excluding will be the trips for which the gender is not filled in, and those for which the user is older than 80 years old. We also had a problem with the birth year 1969 (age 49) being over-represented, but let's see if removing the data in which gender is missing solves the problem. We first apply our filter, then plot a histogram of user age, with age 49 being highlighted.
+
+```{r}
+trips_ag <- trips %>% 
+            filter(gender != 'Missing') %>% 
+            filter(age < 81)
+```
+
+```{r}
+p31 <- ggplot(trips_ag, aes(x = age, fill = age == 49)) + 
+       geom_histogram(color = 'black', binwidth = 1) + 
+       xlab("Age") + ylab("Count") + 
+       ggtitle("Distribution of age without missing gender data") +
+       theme(plot.title = element_text(hjust = 0.5)) + 
+       scale_fill_discrete(name = "Born in 1969")
+
+p31
+rm(p31)
+```
+
+We see, indeed, that the 1969 anomaly is removed when we exclude data in which gender is missing. This could be explained by the fact that people who don't fill out their gender might be the same people who would leave the default birth year when subscribing. We'll continue on with that data for this section.
+
+We can also observe the age distribution thanks to that plot. It shows that there are few users under 20, a mode around 30 and then a long tail. We can also note that there are more adults over 60 than what we expected.
+
+```{r}
+p32 <- ggplot(trips_ag, aes(x = gender)) + 
+       geom_bar(fill = "lightblue", color = "black") + 
+       xlab("Gender") + 
+       ggtitle("Gender distribution of trips taken") +
+       theme(plot.title = element_text(hjust = 0.5))
+
+p32
+rm(p32)
+```
+
+There are significantly more males using Citibike than females. We will keep this in mind as it might provide insight in some findings. 
+
+### 3.2. Age repartition
+
+Let's then display a stacked bar chart displaying the age repartition, but separated between men and women - in order to find out from which age the discrepancy between men and women comes from.
+
+```{r}
+p33 <- ggplot(trips_ag, aes(x = age, fill = gender)) + 
+       geom_histogram(color = 'black', binwidth = 1) + 
+       xlab("Age") + ylab("Count") + 
+       ggtitle("Distribution of age for men and women") +
+       theme(plot.title = element_text(hjust = 0.5))
+
+p33
+rm(p33)
+```
+
+We see that a majority of users in terms of gender are men, and in terms of age, most users are between 20 and 50. Moreover, almost all users above the age of 70 are men - which is even more surprising when you consider the fact that women have a higher life expectancy on average, meaning that there are much more women than men above the age of 70.
+
+### 3.3. Do women commute as much as men ?
+
+Let's now check if we notice any difference in the time of day at which the trips are taken depending on the gender of the user.
+
+```{r}
+
+p34 <- ggplot(trips_ag,
+              aes(x = as.numeric(format(trips_ag$starttime,"%H")) +
+                      as.numeric(format(trips_ag$starttime,"%M"))/60 +
+                      as.numeric(format(trips_ag$starttime,"%S"))/3600,
+                  color = gender)) + 
+       geom_density() +  
+       ggtitle("Repartition of daily trip times for each gender") + 
+       xlab("Hour of the day") + ylab("Density") + 
+       scale_x_continuous(breaks = seq(0,24,4)) +
+       scale_color_discrete(name = "User type") +
+       geom_hline(yintercept = 0, color = 'white') +
+       theme(plot.title = element_text(hjust = 0.5))
+p34
+rm(p34)
+```
+
+We don't see any difference between the daily trip times of men and women, which points towards the fact that women commute as much as men in New York City. The only difference we might notice is that women are slightly more active during the day, while men are more active in the evening and at night. 
+
+### 3.4. How do people of different ages behave daily ?
+
+Let's now look at the repartition of trip times depending on the age of the user : in order to do that, we plot the density of daily trip time for each possible age of the user rounded to the nearest decade. 
+
+```{r}
+p35 <- ggplot(trips_ag,
+             aes(x = as.numeric(format(trips_ag$starttime,"%H")) +
+                     as.numeric(format(trips_ag$starttime,"%M"))/60 +
+                     as.numeric(format(trips_ag$starttime,"%S"))/3600,
+                 color = factor(floor(trips_ag$age/10)*10))) + 
+       geom_density() +
+       scale_color_brewer(name = "Age (decade)", palette = "RdYlBu",
+                          labels = c("10-20","20-30","30-40","40-50","50-60",
+                                      "60-70","70-80","80-90")) +
+       ggtitle("Repartition of daily trip times depending on age (decade)") + 
+       xlab("Hour of the day") + ylab("Density") + 
+       scale_x_continuous(breaks = seq(0,24,4)) +
+       geom_hline(yintercept = 0, color = 'white') +
+       theme(plot.title = element_text(hjust = 0.5))
+p35
+rm(p35)
+```
+
+Here, we see what we expected to see : users from 20 to 60 generally use Citi Bikes to commute, as evidenced by the modes around 8 a.m. and 6 a.m., but people in their 70s and 80s, who are generally retired, use Citi Bike for leisure a lot more. Moreover, teenagers using Citi Bike tend to travel more at night (9 p.m. to 4 a.m.) than others, while being much less active in the morning - which indeed sounds a lot like teenagers.
+
+In this second part, we have briefly seen what kind of demographic Citi Bike subscribers were part of. The average subscriber is a male between the age of 20 and 50, and he uses the system to commute, which corroborates our finding from the first part.
+
+```{r}
+rm(trips_ag)
+```
+
+## 4. Customers and subscribers : two very different ways to use Citi Bike
+
+Here, we will be looking at the "Customer Type" variable in the trip database. It is an unordered factor corresponding to the type of customer having taken the trip. The different levels are "Customer" and "Subscriber". The Customers are defined as the people using a 1 or 3 day pass, thus more likely to be occasional users or tourists, and the Subscribers are those with the annual pass, thus more likely to be regular users. 
+
+There are significantly more Subscriber trips than Customer trips, as we can wee below :
+
+```{r}
+dplyr::count(trips,usertype)
+```
+
+We would expect a service like Citi Bike to be used by subscribers much more than by occasional users, since the annual subscription (170 dollars) is much more cost-efficient than the 1-day pass (12 dollars). We observe a roughly 10%/90% repartition. However, the size of our data (more than 4.5 million trips) makes it so that we can still safely assume that the trends observed among customers are actually meaningful.
+
+### 4.1. Seasonal patterns 
+
+First, we want to observe seasonal patterns in the usage of Citi Bikes by customers and subscribers. We can't use the daily trip summary for that because the trip count isn't separated between customers and subscribers, so the only thing we can plot is the number of trips taken by customers and subscribers in the three months that form our trip database. We do that in the form of a stacked bar chart.
+
+```{r}
+
+p41 <- ggplot(trips,aes(x = format(trips$starttime,"%B"), fill = usertype)) + 
+       geom_bar(color = 'black') + 
+       ggtitle("Number of trips per user type for each month") + 
+       xlab("Month") + ylab("Count") + 
+       scale_fill_discrete(name = "User type")
+p41
+rm(p41)
+```
+
+First of all, this confirms that an overwhelming majority of trips are taken by subscribers with the annual pass. As for the variation in the repartition between customers and subscribers, we can clearly see an evolution. We can see that there is a much lower proportion of customers compared to subscribers in the winter than in the summer. Moreover, between July and October, we see the number of customers decrease while the number of subscribers increases: this is a clear indicator that there is a lower proportion of customers in October than in July, although that proportion is still much higher than in February. 
+
+This seems logical, as we would expect occasional users and to use Citi Bike when the weather is more forgiving. On the other hand, Subscribers probably keep using the bikes in the winter by necessity more than for leisure (commute, getting from point A to point B on time for various commitments) and are probably more prepared to rent bikes for the whole season with proper gear to face the cold and often snowy streets. 
+
+Also, we might follow with the hypothesis that Citi Bike is used by tourists - and tourists would in all likelihood be customers rather than subscribers. Then, the increasing number of tourists in the summer compared to the winter might be another cause for that observed difference. 
+
+### 4.2. Weekly patterns 
+
+We've already seen that Citi Bikes were being used less on weekends. Let's now see whether the weekly usage differs between the two categories of customers. In order to do that, we plot another stacked bar chart.
+
+```{r}
+
+p42 <- ggplot(trips,aes(x = format(trips$starttime,"%A"), fill = usertype)) + 
+       geom_bar(color = 'black') + 
+       ggtitle("Number of trips per user type for each day of the week") + 
+       xlab("Weekday") + ylab("Count") + 
+       scale_x_discrete (limits = 
+          c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))+
+       scale_fill_discrete(name = "User type")
+p42
+rm(p42)
+```
+
+We see here that customers actually use Citi Bike on weekends more than they do during the week, while it's the opposite for subscribers. This, once again, supports the hypothesis that most subscribers use Citi Bike to commute, and adds the information that customers would use Citi Bike for leasure, hence the increased numbers on weekends. Please note that this doesn't necessarily corroborate the hypothesis that customers are mostly tourists, as tourists generally wouldn't care whether or not they're visiting during a weekday or during a weekend day. Instead, it probably means that there are some NYC residents who use the system to go out during the weekend, but not often enough for it to be worth it to get a subscription.
+
+### 4.3 Daily patterns
+
+```{r}
+
+p43 <- ggplot(trips,
+             aes(x = as.numeric(format(trips$starttime,"%H")) +
+                     as.numeric(format(trips$starttime,"%M"))/60 +
+                     as.numeric(format(trips$starttime,"%S"))/3600,
+                 color = usertype)) + 
+       geom_density() +
+       ggtitle("Daily repartition of trip times for each user type") + 
+       xlab("Hour of the day") + ylab("Density") + 
+       scale_x_continuous(breaks = seq(0,24,4)) +
+       scale_color_colorblind(name = "User type") +
+       geom_hline(yintercept = 0, color = 'white')
+p43
+rm(p43)
+```
+
+We notice a clear difference in the density curves between customers and subscribers, and this difference is another strong piece of evidence in favor of the hypothesis that customers might be in majority tourists. Indeed, we see a curve that's roughly bi-modal for subscribers, with modes aroung 8 a.m. and 6 p.m., which are times usually associated with commuting. On the other hand, the curve for customers is unimodal, with the mode roughly around 3 p.m., and a much slower start to the day; which indicates that the bikes are being used for leisure. 
+
+### 4.4. Types of trips taken
+
+We want to highlight the difference in the types of trips taken by customers and subscribers. First of all, we want to see if there's any difference in the duration of those trips.
+
+Here, we plot vertical lines for both plots that signal the end of the time included in the plan, which is 30 minutes for customers and 45 for subscribers. 
+
+```{r}
+line_data = tibble(usertype = c("Customer","Subscriber"), vline = c(30,45))
+
+breaks_21 = seq(0,120,3)
+p44 <- ggplot(trips,aes(x = tripduration/60)) + 
+       geom_histogram(aes(y = ..density..),
+                      breaks = breaks_21, 
+                      fill = "lightblue",color = "black") + 
+       facet_wrap(~usertype) + 
+       geom_vline(data = line_data, aes(xintercept = vline)) +
+       ggtitle("Repartition of trip durations for each user type") + 
+       xlab("Trip duration (minutes)") + ylab("Density")
+p44
+rm(p44)
+```
+
+Once again, we can notice a clear difference between both repartitions. Indeed, subscribers tend to favor shorter trips, with the overwhelming majority of trips taken being around 10 to 15 minutes long - that might correspond to the time for commuting. Customers, on the other hand, take longer trips, with the mode being around 25 minutes. This can be explained by the fact that we consider some customers to be tourists, and tourists would explore the city much more than residents, thus taking longer-lasting trips.
+
+Moreover, we can notice that customers are generally much keener on taking long trips, going as far as to make them longer than the time that is included in the plan. Indeed, even though we do notice a significant dropoff between the 25-30 and 30-35 minutes bins, a significant part of customer trips are still longer than 30 minutes, with some of them going well past 1 hour. As for subscribers, they usually take very few trips longer than 45 minutes, which is their alloted time limit.
+
+Something that might also reveal something would be the average trip length for each hour of the day. Let's show that plot : 
+
+```{r}
+
+p45 <- ggplot(trips,
+              aes(x = factor(
+                   as.numeric(format(trips$starttime,"%H"))),
+                  y = tripduration,
+                  color = usertype)) + 
+       stat_summary(fun.y = 'mean', geom = "point") +  
+       ggtitle("Average trip duration per hour of day for each user type") + 
+       xlab("Hour of the day") + ylab("Trip duration") + 
+       scale_y_continuous(breaks = seq(0,1600,200)) +
+       ylim(0,1600) +
+       scale_color_discrete(name = "User type")
+p45
+rm(p45)
+```
+
+First of all, we get a confirmation that the average trip is longer for customers than for subscribers. Other than that, we can't see that much on this plot, since the trip durations are mostly similar throughout the day; however, we do notice two small modes around commuting hours for subscribers, indicating that their trips to commute might be longer than their trips during the rest of the day. As for customers, we see that their trip are longest between 10 a.m. and 6 p.m., which corresponds to the times at which tourists might use Citi Bike to wander around the city without really caring for getting from point A to point B.
+
+## 5. Geographical trends
+
+In this part, we will try to identify geographical trends to try and understand what use people have of the cibibikes. Based on New York geography and its subway tracks, we expect to find some proofs that Citi Bikes are a means of transportation for routes that are harder to do with subways, for instance East-West commutation. Furthermore, we will try to identify trends that shows that bikes are both a recreational and a practical way of commuting in New York. For the following study, we will focus on geograpical features, such as the station locations, as well as the route and the distance done by users (we do discard any seasonality effect by aggregating over the study over the 3 months we chose previously).
+
+First of all, we need to join the station info data with the trip data, in order to get the correct latitudes and longitudes for each trip. 
+
+```{r}
+colnames(trips)[4] <- 'start_station_id'
+colnames(trips)[5] <- 'end_station_id'
+concise_trips <- subset(trips, select=-c(starttime,stoptime,bikeid))
+```
+
+```{r}
+colnames(stations)[1] = 'start_station_id'
+concise_trips_merged <- merge(x = concise_trips, y = stations, by = 'start_station_id')
+
+colnames(stations)[1] = 'end_station_id'
+concise_trips_merged <- merge(x = concise_trips_merged, y = stations, by = 'end_station_id')
+```
+
+
+### 5.1. Most active stations
+
+First of all, we can visualize the stations that are the most 'active': those are the stations that have the highest traffic of Citi Bikes (in terms of start and end for each station).
+
+```{r}
+#COMPUTING THE MOST STARTED STATIONS
+most_started <- count(concise_trips_merged, 
+                      c(concise_trips_merged$start_station_id))
+colnames(stations)[1] = 'start_station_id'
+colnames(most_started)[1] = 'start_station_id'
+most_started_merged <- merge(x = most_started, y = stations, by = 'start_station_id')
+most_started_merged <- most_started_merged[order(-most_started_merged$n),]
+
+#COMPUTING THE MOST ENDED STATIONS
+colnames(stations)[1] = 'end_station_id'
+most_ended <- count(concise_trips_merged, c(concise_trips_merged$end_station_id))
+colnames(most_ended)[1] = 'end_station_id'
+most_ended_merged <- merge(x = most_ended, y = stations, by = 'end_station_id')
+most_ended_merged  <- most_ended_merged[order(-most_ended_merged$n),]
+```
+
+```{r}
+#AGGREGATING THE TWO TO SEE THE MOST ACTIVE STATIONS
+colnames(most_started_merged)[1] = 'station_id'
+colnames(most_started_merged)[2] = 'n_s'
+colnames(most_ended_merged)[1] = 'station_id'
+colnames(most_ended_merged)[2] = 'n_e'
+most_active <- merge(x = most_started_merged, 
+                     y = most_ended_merged, 
+                     by = 'station_id')
+most_active$n <- most_active$n_e + most_active$n_s
+most_active <- subset(most_active, 
+                      select=-c(n_s,n_e,longitude.y,latitude.y,name.y))
+most_active <- most_active[order(-most_active$n),]
+colnames(most_active)[2] <- 'names'
+colnames(most_active)[3] <- 'latitude'
+colnames(most_active)[4] <- 'longitude'
+```
+
+
+
+```{r}
+
+apiKey <- 'AIzaSyBlArTIZYpahLCoMaIdV4pQn1GxCHk9XR8'
+register_google(apiKey, account_type = "premium", day_limit = 100000)
+```
+
+```{r}
+nyc_base <- ggmap::get_map(location=c(lon=mean(most_active$longitude),
+                                      lat=mean(most_active$latitude)),
+                           zoom=12)
+p51 <- ggmap(nyc_base)+
+       geom_point(data=most_active,
+                  aes(x=longitude, y=latitude,color=n), 
+                      size=1.2)+
+       scale_colour_gradient(low = "blue", high = "red")+
+       xlab("Latitude")+
+       ylab("Longitude")+
+       ggtitle("The most active Citibike stations in New York City")+
+       theme(plot.title = element_text(hjust = 0.5))+ 
+       scale_fill_discrete(name = "Activity (in number of customers)")
+
+p51
+rm(p51)
+```
+
+From the map, we can see that the there are multiple 'active' zones but the general trend is that Midtown is the most active part of Manhattan. There is also a lot of activity in Downtown, along Central Park and in the neighborhoods of Brooklyn that are close to Manhattan. Areas close to Central Park, or in Brooklyn are zones that we can consider to be mostly visited by tourists. However, the high activity of citibikes in Midtown could be further evidence that citibikes are used for commuting since Midtown is a working area of Manhattan. Furthermore, the activity in Downtown also seems more likely to be the result of commuting then visiting.
+
+A natural follow-up question would be to try and find whether the most active station change between customers and subscribers, and also whether they change depending on the season. We can do just that by displaying the same map, with markers of different colors for customers and subscribers, and faceting it by season.
+
+
+### 5.2. Most commons routes
+
+To go further in our analysis, we can visualize the most common trips made by citibikes users. To do so, we will gather for each trip the start station and the station of arrival, and compute the most likely route the users took by using the route function from ggmap package (and using the option so that the routes are tailored for bike use). We first have to create adequate dataframes for customers and subscribers. 
+
+```{r}
+concise_trips_merged_s <- concise_trips_merged[
+                           concise_trips_merged$usertype=='Subscriber',]
+
+ct_merged_shorted_s <- count_(concise_trips_merged_s, 
+                              vars=c('start_station_id','end_station_id'))
+ct_merged_shorted_s <- ct_merged_shorted_s[order(-ct_merged_shorted_s$n),]
+ct_merged_shorted_s <- ct_merged_shorted_s[1:1000,]
+
+colnames(stations)[1] = 'start_station_id'
+ct_merged_shorted_s <- merge(x = ct_merged_shorted_s, 
+                             y = stations, by = 'start_station_id')
+
+colnames(stations)[1] = 'end_station_id'
+ct_merged_shorted_s <- merge(x =ct_merged_shorted_s, 
+                             y = stations, by = 'end_station_id')
+
+ct_merged_shorted_s <- ct_merged_shorted_s[order(-ct_merged_shorted_s$n),]
+
+ct_merged_shorted_s['from'] <- paste(ct_merged_shorted_s$latitude.x,',',
+                                     ct_merged_shorted_s$longitude.x)
+ct_merged_shorted_s['to'] <- paste(ct_merged_shorted_s$latitude.y,',',
+                                   ct_merged_shorted_s$longitude.y)
+
+
+concise_trips_merged_c <- concise_trips_merged[
+                           concise_trips_merged$usertype=='Customer',]
+
+ct_merged_shorted_c <- count_(concise_trips_merged_c, 
+                              vars=c('start_station_id','end_station_id'))
+ct_merged_shorted_c <- ct_merged_shorted_c[order(-ct_merged_shorted_c$n),]
+ct_merged_shorted_c <- ct_merged_shorted_c[1:1000,]
+
+colnames(stations)[1] = 'start_station_id'
+ct_merged_shorted_c <- merge(x = ct_merged_shorted_c, 
+                             y = stations, by = 'start_station_id')
+
+colnames(stations)[1] = 'end_station_id'
+ct_merged_shorted_c <- merge(x =ct_merged_shorted_c, 
+                             y = stations, by = 'end_station_id')
+
+ct_merged_shorted_c <- ct_merged_shorted_c[order(-ct_merged_shorted_c$n),]
+
+ct_merged_shorted_c['from'] <- paste(ct_merged_shorted_c$latitude.x,',',
+                                     ct_merged_shorted_c$longitude.x)
+ct_merged_shorted_c['to'] <- paste(ct_merged_shorted_c$latitude.y,',',
+                                   ct_merged_shorted_c$longitude.y)
+
+```
+
+
+
+```{r  width=8, height=10, cache=FALSE, results=FALSE, comment=FALSE, warning=FALSE,message=FALSE,echo=FALSE,fig.width=10, fig.height=17}
+library(stringr)
+options(expressions=10000)
+
+nyc_base <- ggmap::get_map(location = c(long = -73.97634,
+                                        lat = 40.75000),
+                           zoom=12,color='bw',
+                           maptype = 'terrain')
+nyc_base <- ggmap(nyc_base)
+
+
+leg <-function(start, dest,n,color_path){
+      size_value <- 0.8
+      alpha_value <- 0.8
+      color <- color_path
+    
+    r<- route(from=start,to=dest,mode = c("bicycling"),
+              structure = c("route"))  
+    c<- geom_path(aes(x = lon, y = lat,color=color),
+             alpha = alpha_value,size = size_value,  data = r) 
+    return (c)
+}
+
+base <- nyc_base
+
+ for (n in 1:150){
+ 
+     l<-leg(str_replace_all(ct_merged_shorted_s$from[n], 
+                            " ", ""), 
+            str_replace_all(ct_merged_shorted_s$to[n], 
+                            " ", ""),
+            n,'#e69f00') 
+     
+     base<-base+l
+ }
+
+ for (n in 1:150){
+ 
+     l<-leg(str_replace_all(ct_merged_shorted_c$from[n], 
+                            " ", ""), 
+            str_replace_all(ct_merged_shorted_c$to[n], 
+                            " ", ""),
+            n,'black') 
+     
+     base<-base+l
+ }
+
+
+
+p53 <- base+
+       xlab("Latitude")+
+       ylab("Longitude")+
+       ggtitle("The most frequent trips around New York City")+
+       theme(plot.title = element_text(hjust = 0.5)) + 
+       scale_color_discrete(labels = c("Subscriber", "Customers"))
+
+p53
+rm(p53)
+```
+
+The above map provides some interesting information:
+
+- There are some main zones where the trips are done: around Central Park, in Midtown as well as along the Hudson River. 
+- Touristic zones can be identified: Central Park, Governor's island for instance
+- The Hudson River route is particularly interesting because it is the very example of a hybrid route: it is widely used by new yorkers since it is the fastest way for going north/south. But it is also a very scenic route, thus a lot of tourists use it to see the shore
+- Finally, it seems that an important part of the trips that are done in Midtown are mostly longitudinal: this might be a clue that people are using citibikes to compensate for the lack of subways in the East-West direction.
+
+
+### 5.3. Geographical patterns for trips
+
+Finally, we would like to study whether there are some geographical patterns related to latitude/longitude features. More specifically, we would like to see if there are some discrepancies between subscribers and customers on this particular matter.
+
+```{r}
+
+concise_trips_merged$dirNS <- abs(concise_trips_merged$longitude.y - 
+                                  concise_trips_merged$longitude.x)
+concise_trips_merged$dirWE <- abs(concise_trips_merged$latitude.y - 
+                                  concise_trips_merged$latitude.x)
+```
+
+```{r}
+p54 <- ggplot(concise_trips_merged,
+              aes(x=concise_trips_merged$dirNS,
+                  color=concise_trips$usertype))+
+       geom_density() + 
+       xlab("Difference in Longitude")+
+       ylab("Density")+
+       ggtitle("Difference in Longitude per usertype")+
+       theme(plot.title = element_text(hjust = 0.5))
+
+p54
+rm(p54)
+```
+
+
+```{r}
+p55 <- ggplot(concise_trips_merged,
+              aes(x=concise_trips_merged$dirWE,
+                  color=concise_trips_merged$usertype))+
+       geom_density()+
+       xlab("Difference in Latitude")+
+       ylab("Density")+
+       ggtitle("Difference in Latitude per usertype")+
+       theme(plot.title = element_text(hjust = 0.5))
+rm(p55)
+```
+
+Here we have plotted the absolute difference in longitude between start and finish. Because of the layout fo New York, we can approximate longitude difference as a North/South difference and latitude difference as a East/West difference.We can see that for both latitude and longitude, subscribers have a much higher peak close to low values. 
+
+It reveals yet another difference in the behavior of subscribers and customers: subscribers usually do shorter rides (in terms of distance) specially if it is for a North/South difference. This seems to follow the logic of commuting: commuters will not do lengthy North/South rides since it is slower than taking the subway. However, for short rides, it can be quicker to take a bike.
+
+```{r}
+concise_trips_merged$distance <- distGeo(matrix(c(concise_trips_merged$latitude.x,
+                                                  concise_trips_merged$longitude.x),
+                                                ncol = 2),
+                                         matrix(c(concise_trips_merged$latitude.y, 
+                                                  concise_trips_merged$longitude.y),
+                                                ncol = 2))
+concise_trips_merged <- subset(concise_trips_merged,
+                               select=-c(name.y,name.x,
+                                         longitude.x,longitude.y,
+                                         latitude.x,latitude.y))
+p56 <- ggplot(concise_trips_merged,
+              aes(x=concise_trips$distance,
+                  color=concise_trips$usertype))+
+       geom_density() + 
+       xlab("Distance")+
+       ylab("Density")+
+       ggtitle("Difference in distance per usertype")+
+       theme(plot.title = element_text(hjust = 0.5))
+
+p56
+rm(p56)
+```
+
+If we plot the distribution of distance for both customers and subscribers, it confirms what we previously saw with latitude and longitude: subscribers tend to do shorter rides (in terms of distance).
+
+Therefore, there is a genuine discrepancy between subscribers and customers which attest that there are two different ways of using citibikes: short rides or more lengthy rides, and it confirms that citibikes are not only used by tourists, but also by New Yorkers as a way of commuting.
+
 
 # V. Executive summary
 
