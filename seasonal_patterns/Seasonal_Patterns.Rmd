@@ -224,6 +224,7 @@ map_winter <- map_winter %>%
 ```{r}
 map_summer <- leaflet() %>% 
         addTiles()
+
 map_summer <- map_summer %>%
   addAwesomeMarkers(lat = pop_summer_cus$latitude, 
              lng = pop_summer_cus$longitude, 
@@ -234,7 +235,12 @@ map_summer <- map_summer %>%
              lng = pop_summer_sub$longitude, 
              label = pop_summer_sub$name,
              labelOptions = labelOptions(noHide = F),
-             icon = icon_blue)
+             icon = icon_blue) %>%
+  addLegend("bottomright", 
+            colors = c("dodgerblue",  "forestgreen"),
+            labels = c("Subscribers", "Customers"),
+            title = "Types of users")
+  
 sync(map_winter, map_summer)
 ```
 
