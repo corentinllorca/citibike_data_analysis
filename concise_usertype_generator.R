@@ -1,39 +1,25 @@
----
-title: "Untitled"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-```{r comment=FALSE, message=FALSE,warning=FALSE,echo=FALSE}
 library(readr)
 library(sp)
 library(plyr)
 library(dplyr)
 library(ggmap)
 library(ggplot2)
-concise_trips <- read_csv("../concise_trips.csv")
+concise_trips <- read_csv("data/concise_trips.csv")
 colnames(concise_trips)[4] <- 'start_station_id'
 colnames(concise_trips)[5] <- 'end_station_id'
 concise_trips <- subset(concise_trips, select=-c(starttime,stoptime,bikeid,gender))
-concise_trips <- concise_trips[concise_trips$usertype=='Subscriber']
-stations_info <- read_csv("../stations_info.csv")
+
+#<------ CHOOSE EITHER SUBSCRIBER OR CUSTOMER HERE ------------->
+concise_trips <- concise_trips[concise_trips$usertype=='Subscriber',]
+stations_info <- read_csv("data/stations_info.csv")
 colnames(stations_info)[1] = 'start_station_id'
 concise_trips_merged <- merge(x = concise_trips, y = stations_info, by = 'start_station_id')
 
 colnames(stations_info)[1] = 'end_station_id'
 concise_trips_merged <- merge(x = concise_trips_merged, y = stations_info, by = 'end_station_id')
-```
 
-## Including Plots
-```{r comment=FALSE, message=FALSE,warning=FALSE,echo=FALSE}
+
+
 #COMPUTING THE MOST STARTED STATIONS
 colnames(stations_info)[1] = 'start_station_id'
 most_started <- count(concise_trips_merged, c(concise_trips_merged$start_station_id))
@@ -47,9 +33,9 @@ most_ended <- count(concise_trips_merged, c(concise_trips_merged$end_station_id)
 colnames(most_ended)[1] = 'end_station_id'
 most_ended_merged <- merge(x = most_ended, y = stations_info, by = 'end_station_id')
 most_ended_merged  <- most_ended_merged[order(-most_ended_merged$n),]
-```
 
-```{r,echo=FALSE}
+
+
 #AGGREGATING THE TWO TO SEE THE MOST ACTIVE STATIONS
 colnames(most_started_merged)[1] = 'station_id'
 colnames(most_started_merged)[2] = 'n_s'
@@ -62,20 +48,15 @@ most_active <- most_active[order(-most_active$n),]
 colnames(most_active)[2] <- 'names'
 colnames(most_active)[3] <- 'latitude'
 colnames(most_active)[4] <- 'longitude'
-```
+
 
 
 # 1) Most active stations
 
-First of all, we can visualize the stations that are the most 'active': those are the stations that have the highest traffic of citibikes (in terms of start and end for each station).
-
-```{r warning=FALSE, comment=FALSE,echo=FALSE,cache=FALSE, results=FALSE, comment=FALSE, warning=FALSE,message=FALSE}
+#First of all, we can visualize the stations that are the most 'active': those are the stations that have the highest traffic of citibikes (in terms of start and end for each station).
 
 apiKey <- 'AIzaSyBlArTIZYpahLCoMaIdV4pQn1GxCHk9XR8'
 register_google(apiKey, account_type = "premium", day_limit = 100000)
-```
-
-```{r comment=FALSE, warning=FALSE,echo=FALSE}
 
 concise_trips_merged_shorted <- count_(concise_trips_merged, 
                                        vars=c('start_station_id','end_station_id'))
@@ -97,11 +78,4 @@ concise_trips_merged_shorted['from'] <- paste(concise_trips_merged_shorted$latit
 concise_trips_merged_shorted['to'] <- paste(concise_trips_merged_shorted$latitude.y,',',
                                             concise_trips_merged_shorted$longitude.y)
 
-```
-
-```{r}
-head(concise_trips_merged_shorted)
-#write.csv(MyData, file = "MyData.csv")
-```
-
-
+write.csv(concise_trips_merged_shorted, file = "data/concise_trips_merged_shorted_subscriber.csv")

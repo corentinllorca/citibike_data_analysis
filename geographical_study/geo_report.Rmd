@@ -11,7 +11,6 @@ knitr::opts_chunk$set(echo = TRUE)
 library(readr)
 library(dplyr)
 library(sp)
-library(plyr)
 library(ggmap)
 library(ggplot2)
 library(stringr)
@@ -45,22 +44,15 @@ concise_trips_merged <- merge(x = concise_trips_merged, y = stations_info, by = 
 ## Including Plots
 ```{r comment=FALSE, message=FALSE,warning=FALSE,echo=FALSE}
 #COMPUTING THE MOST STARTED STATIONS
-most_started <- plyr::count(concise_trips_merged, c("start_station_id"))
-```
-
-```{r}
-head(stations_info)
-```
-
-
-```{r,echo=FALSE}
+most_started <- count(concise_trips_merged, c(concise_trips_merged$start_station_id))
 colnames(stations_info)[1] = 'start_station_id'
+colnames(most_started)[1] = 'start_station_id'
 most_started_merged <- merge(x = most_started, y = stations_info, by = 'start_station_id')
-most_started_merged <- most_started_merged[order(-most_started_merged$freq),]
+most_started_merged <- most_started_merged[order(-most_started_merged$n),]
 
 #COMPUTING THE MOST ENDED STATIONS
 colnames(stations_info)[1] = 'end_station_id'
-most_ended <- plyr::count(concise_trips_merged, c(end_station_id))
+most_ended <- count(concise_trips_merged, c(concise_trips_merged$end_station_id))
 colnames(most_ended)[1] = 'end_station_id'
 most_ended_merged <- merge(x = most_ended, y = stations_info, by = 'end_station_id')
 most_ended_merged  <- most_ended_merged[order(-most_ended_merged$n),]
