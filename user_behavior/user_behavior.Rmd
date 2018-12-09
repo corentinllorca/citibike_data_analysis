@@ -14,59 +14,15 @@ knitr::opts_chunk$set(message = FALSE,
 
 ```{r}
 library(tidyverse)
-data <- read_csv("../data/2018-feb-jul-oct-citibike-trips.csv")
+data <- read_csv("../data/concise_trips_cleaned.csv")
 ```
 
-## Daily patterns
+## Who uses Citi Bike ?
 
-Here, we want to observe a few daily behavioral patterns in Citi Bike users. 
 
-### Do people commute with Citi Bike ?
+### Customers and Subscribers, and their usage of Citi Bike
 
-Naturally, the first question to ask would be the following : at which time of day do people travel ? We try to answer this by plotting the distribution of the 'starttime' variable across 24 hours. We use the starting time of the trip to approximate the time at which the person is traveling. 
-
-```{r}
-
-p1 <- ggplot(data,
-             aes(x = as.numeric(format(data$starttime,"%H")))) + 
-      geom_bar(fill = "lightblue",color = "black") + 
-      ggtitle("Repartition of daily trip times") + 
-      xlab("Hour of the day") + ylab("Count")
-p1
-```
-
-Here, we notice something that we were expecting : we observe two modes around 8 a.m. and 6 p.m., which correspond quite precisely to working hours. This seems to indicate that people do use Citi Bike in order to commute. In order to explore the question further, we might want to plot the number of trips taken per day of the week. 
-
-```{r}
-
-p2 <- ggplot(data,aes(x = format(data$starttime,"%A"))) + 
-      geom_bar(color = 'black', fill = 'light blue') + 
-      ggtitle("Number of trips for each day of the week") + 
-      xlab("Weekday") + ylab("Count") + 
-      scale_x_discrete (limits = 
-          c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
-p2
-```
-
-Here, we see that there are less trips being taken during the weekend, thus strenghtening the hypothesis that most people use Citi Bike to commute. However, both plots did not show a significant difference between working hours / days and the rest of the hours / days, meaning that there is still a large part of people who might use Citi Bike for leisure.
-
-### What kind of trips do people take ? 
-
-With that question, our aim is to understand if people take trips to go to work, to visit friends, or even simply to bike around the city. In order to draw conclusions, we'll first be plotting the average trip duration for each hour of the day. 
-
-```{r}
-
-p3 <- ggplot(data,aes(x = factor(as.numeric(format(data$starttime,"%H"))), 
-                      y = tripduration)) + 
-      stat_summary(fun.y = "mean", geom = "bar")+ 
-      ggtitle("Average trip duration per hour of day") + 
-      xlab("Hour of the day") + ylab("Average trip duration")
-p3
-```
-
-Unfortunately, there isn't much of a pattern that we can observe here. We do notice a dip in the average trip duration around 5 and 6 a.m., but that is probably due to fluctiation since it's also around the time of day at which we observe the least traffic. We also see that the average trip duration is slightly higher during the start of the afternoon, which would correspond to trips taken for leisure and not for commuting. This checks out, if we estimate that trips made for commuting would be shorter because people would be in more of a hurry.
-
-## Who are customers and who are subscribers ?
+There are significantly more Subscribers (year-long subscribers) than Customers (Pass or Single Trip users). This will be interesting when we try to figure out commuters v. tourists habits and differences in Citibike usage.
 
 Here, we will be looking at the "Customer Type" variable in the trip database. It is an unordered factor corresponding to the type of customer having taken the trip. The different levels are "Customer" and "Subscriber". The Customers are defined as the people using a 1 or 3 day pass, thus more likely to be occasional users, and the Subscribers are those with the annual pass, thus more likely to be regular users. 
 
@@ -78,7 +34,7 @@ dplyr::count(data,usertype)
 
 We would expect a service like Citi Bike to be used by subscribers much more than by occasional users, since the annual subscription (170 dollars) is much more cost-efficient than the 1-day pass (12 dollars). We observe a roughly 10%/90% repartition. However, the size of our data (more than 4.5 million trips) makes it so that we can still safely assume that the trends observed among customers are actually meaningful.
 
-### Differences in seasonal usage 
+#### Seasonal patterns 
 
 ```{r}
 
@@ -95,7 +51,7 @@ First of all, this confirms that an overwhelming majority of trips are taken by 
 This seems logical, as we would expect occasional users to use Citi Bike when the weather is more forgiving. Also, we might emit the hypothesis that Citi Bike is used by tourists - and tourists would in all likelihood be customers rather than subscribers. Then, the increasing number of tourists in the summer compared to the winter might be another cause for that observed difference. 
 
 
-### Differences in weekly usage 
+#### Weekly patterns 
 
 We've already seen that Citi Bikes were being used less on weekends. Let's now see whether the weekly usage differs between the two categories of customers.
 
@@ -114,28 +70,35 @@ p5
 We see here that customers actually use Citi Bike on weekends more than they do during the week, while it's the opposite for subscribers. This suggests that subscribers might use Citi Bike to commute to work, while customers use it more for leisure, hence the important use on weekends.
 
 
-### Differences in daily usage 
+#### Daily patterns
 
 
 ```{r}
 
 p6 <- ggplot(data,
-             aes(x = as.numeric(format(data$starttime,"%H")))) + 
-      geom_histogram(aes(y = ..density..), bins = 24,
-                     fill = "lightblue",color = "black") + 
-      facet_wrap(~usertype) + 
-      ggtitle("Repartition of trip times for each user type") + 
-      xlab("Hour of the day") + ylab("Density")
+             aes(x = as.numeric(format(data$starttime,"%H")) +
+                     as.numeric(format(data$starttime,"%M"))/60 +
+                     as.numeric(format(data$starttime,"%S"))/3600,
+                 color = usertype)) + 
+      geom_density() +
+      ggtitle("Daily repartition of trip times for each user type") + 
+      xlab("Hour of the day") + ylab("Density") + 
+      scale_x_continuous(breaks = seq(0,24,4)) +
+      scale_color_colorblind(name = "User type") +
+      geom_hline(yintercept = 0, color = 'white')
 p6
 ```
 
-We can see, surprisingly enough, that there is little to no difference in the distributions of the trip hours between subscribers and customers. Although we did expect the subscriber trip times to have two modes around the morning and the late afternoon corresponding to working hours, we would have expected for customer trip times to be more spread out during the day since we assumed that customers mostly used Citi Bike for leisure.
+We notice a clear difference in the density curves between customers and subscribers, and this difference is another strong piece of evidence in favor of the hypothesis that customers might be in majority tourists. Indeed, we see a curve that's roughly bi-modal for subscribers, with modes aroung 8 a.m. and 6 p.m., which are times usually associated with commuting. On the other hand, the curve for customers is unimodal, with the mode roughly around 3 p.m., and a much slower start to the day; which indicates that the bikes are being used for leisure. 
 
-This might for instance mean that customers are actually mostly residents who sometimes purchase short-term passes, but who don't bike enough for a $170 annual subscription to be worth it. The hypothesis might then be that they puchase passes to commute and not necessarily for leisure, but only during the summer when the weather is nice.
 
-### Differences in trip duration
+#### Types of trips taken
 
-Here, we plot vertical lines for both plots that signal the end of the time included in the plan, which is 30 minutes for customers and 45 for subscribers.
+##### Trip duration
+
+We want to highlight the difference in the types of trips taken by customers and subscribers. First of all, we want to see if there's any difference in the duration of those trips.
+
+Here, we plot vertical lines for both plots that signal the end of the time included in the plan, which is 30 minutes for customers and 45 for subscribers. 
 
 ```{r}
 line_data = tibble(usertype = c("Customer","Subscriber"), vline = c(30,45))
@@ -152,12 +115,116 @@ p7 <- ggplot(data,aes(x = tripduration/60)) +
 p7
 ```
 
-This time, both repartitions can be seen clearly, and we notice that they are very different from one another. Indeed, subscribers tend to favor shorter trips, with the overwhelming majority of trips taken being around 10 to 15 minutes long - that might correspond to the time for commuting. Customers, on the other hand, take longer trips, with the mode being around 25 minutes. This can be explained by the fact that we consider some customers to be tourists, and tourists would explore the city much more than residents, thus taking longer-lasting trips.
+Once again, we can notice a clear difference between both repartitions. Indeed, subscribers tend to favor shorter trips, with the overwhelming majority of trips taken being around 10 to 15 minutes long - that might correspond to the time for commuting. Customers, on the other hand, take longer trips, with the mode being around 25 minutes. This can be explained by the fact that we consider some customers to be tourists, and tourists would explore the city much more than residents, thus taking longer-lasting trips.
 
 Moreover, we can notice that customers are generally much keener on taking long trips, going as far as to make them longer than the time that is included in the plan. Indeed, even though we do notice a significant dropoff between the 25-30 and 30-35 minutes bins, a significant part of customer trips are still longer than 30 minutes, with some of them going well past 1 hour. As for subscribers, they usually take very few trips longer than 45 minutes, which is their alloted time limit.
 
-Something we could expand upon later in the project would be a similar type of plot, but also faceted by month, which would reveal the behavioral patterns between different user types in the different seasons.
+Something that might also reveal something would be the average trip length for each hour of the day. Let's show that plot : 
 
-### Geographical differences
+```{r}
+
+p8 <- ggplot(data,
+             aes(x = factor(
+                  as.numeric(format(data$starttime,"%H"))),
+                 y = tripduration,
+                 color = usertype)) + 
+      stat_summary(fun.y = 'mean', geom = "point") +  
+      ggtitle("Average trip duration per hour of day for each user type") + 
+      xlab("Hour of the day") + ylab("Trip duration") + 
+      scale_y_continuous(breaks = seq(0,1600,200)) +
+      ylim(0,1600) +
+      scale_color_discrete(name = "User type")
+p8
+```
+
+First of all, we get a confirmation that the average trip is longer for customers than for subscribers. Other than that, we can't see that much on this plot, since the trip durations are mostly similar throughout the day; however, we do notice two small modes around commuting hours for subscribers, indicating that their trips to commute might be longer than their trips during the rest of the day. As for customers, we see that their trip are longest between 10 a.m. and 6 p.m., which corresponds to the times at which tourists might use Citi Bike to wander around the city without really caring for getting from point A to point B.
+
+### Age and gender of users 
 
 
+The distribution shows that there are few users under 20 and a long tail peaking around 25 (the age depends on the time of registration so this is a rough estimate based on the fact that Citibike exists since 2013). We expected fewer adults over 60 to use Citibike.
+
+There are significantly more males using Citibike than females. We will keep this in mind as it might provide insight in some findings. 
+
+The Citi Bike public database contains informations about the age and gender of the users. However, that is only the case for users with the subscriptions, as simple customers with short-term passes aren't required to fill in any information. Still, we have seen that subscriber trips represented about 90% of all trips, so the following studies on age and gender can be safely extended to the whole user base of Citi Bike.
+
+As found in our data cleaning, there is a lot of missing data on gender, and there are a lot of outliers and wrong-looking data on age. For this section, we will then be using a reduced version of the trip database. The data we'll be excluding will be the trips for which the gender is not filled in, and those for which the user is older than 80 years old. We also had a problem with the birth year 1969 (age 49) being over-represented, but let's see if removing the data in which gender is missing solves the problem. We first apply our filter, then plot a histogram of user age, with age 49 being highlighted.
+
+```{r}
+data_ag <- data %>% 
+            filter(gender != 'Missing') %>% 
+            filter(age < 81)
+```
+
+```{r}
+p81 <- ggplot(data_ag[data_ag$age!=49,], aes(x = age)) + 
+       geom_histogram(fill = "orange", color = 'black', binwidth = 1) + 
+       geom_histogram(data = data_ag[data_ag$age == 49,],
+                      fill = "dark green", color = "black",
+                      binwidth= 1) +
+       xlab("Age") + ylab("Count") + 
+       ggtitle("Distribution of age without missing gender data")
+
+p81
+```
+
+We see, indeed, that the 1969 anomaly is removed when we exclude data in which gender is missing. This could be explained by the fact that people who don't fill out their gender might be the same people who would leave the default birth year when subscribing. We'll continue on with that data for this section.
+
+Let's first display a stacked bar chart displaying the age repartition, but separated between men and women.
+
+```{r}
+p82 <- ggplot(data_ag, aes(x = age, fill = gender)) + 
+       geom_histogram(color = 'black', binwidth = 1) + 
+       xlab("Age") + ylab("Count") + 
+       ggtitle("Distribution of age for men and women")
+
+p82
+```
+We see that a majority of users in terms of gender are men, and in terms of age, most users are between 20 and 50. Moreover, almost all users above the age of 70 are men - which is especially significant when you consider the fact that women have a higher life expectancy on average, meaning that there are much more women than men above the age of 70.
+
+Let's now check if we notice any difference in the times at which the trips are taken depending on the gender of the user.
+
+```{r}
+
+p9 <- ggplot(data_ag,
+             aes(x = as.numeric(format(data_ag$starttime,"%H")) +
+                     as.numeric(format(data_ag$starttime,"%M"))/60 +
+                     as.numeric(format(data_ag$starttime,"%S"))/3600,
+                 color = gender)) + 
+      geom_density() +  
+      ggtitle("Repartition of trip times for each gender") + 
+      xlab("Hour of the day") + ylab("Density") + 
+      scale_x_continuous(breaks = seq(0,24,4)) +
+      scale_color_discrete(name = "User type") +
+      geom_hline(yintercept = 0, color = 'white')
+p9
+```
+We don't see any difference between the daily trip times of men and women, which points towards the fact that women commute as much as men in New York City. The only difference we might notice is that women are more active during the day, while men are more active in the evening and at night. 
+
+Let's now look at the repartition of trip times depending on the age of the user : in order to do that, we plot the density of daily trip time for each possible age of the user rounded to the nearest decade. 
+
+```{r}
+library(ggthemes)
+p10 <- ggplot(data_ag,
+             aes(x = as.numeric(format(data_ag$starttime,"%H")) +
+                     as.numeric(format(data_ag$starttime,"%M"))/60 +
+                     as.numeric(format(data_ag$starttime,"%S"))/3600,
+                 color = factor(floor(data_ag$age/10)*10))) + 
+       geom_density() +
+       scale_color_brewer(name = "Age(decade)") +
+       ggtitle("Repartition of daily trip times depending on age (decade)") + 
+       xlab("Hour of the day") + ylab("Density") + 
+       scale_x_continuous(breaks = seq(0,24,4)) +
+       geom_hline(yintercept = 0, color = 'white')
+p10
+```
+
+Here, we see what we expected to see : users from 20 to 60 generally use Citi Bikes to commute, as evidenced by the modes around 8 a.m. and 6 a.m., but people in their 70s and 80s, who are generally retired, use Citi Bike for leisure a lot more. Moreover, teenagers using Citi Bike tend to travel more at night (9 p.m. to 4 a.m.) than others, while being much less active in the morning - which indeed sounds a lot like teenagers.
+
+We now want to look at the difference in speed between people of different ages and genders. In order to do that, we add a "speed" column, which corresponds to the distance divided by the trip duration. The speed is then in m/s. 
+```{r}
+#data$speed <- data$distance/data$tripduration
+``` 
+
+
+Todo : avg speed per age with separation of genders

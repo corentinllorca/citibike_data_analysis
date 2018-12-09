@@ -1,5 +1,5 @@
 ---
-title: "report"
+title: "Report: How do people use Citi Bike ?"
 author: "Arnaud Stiegler (aes2329), Redouane Dziri (rd2853) and Corentin Llorca (cl3783)"
 date: "Fall 2018"
 output:
@@ -14,34 +14,57 @@ knitr::opts_chunk$set(message = FALSE,
                       echo = FALSE)
 ```
 
-## 1. Introduction 
 
+```{r}
+library(readr)
+library(dplyr)
+library(sp)
+library(ggmap)
+library(ggplot2)
+library(stringr)
+library(geosphere)
+library(lubridate)
+library(extracat)
+library(viridis)
+library(ggthemes)
+library(stringr)
+```
 
-## 2. Description of the data
+# I. Introduction 
 
-Our data was collected from [Citibike system data](https://www.citibikenyc.com/system-data). We downloaded trip data (.csv files) from the months of February, July and October 2018 from [trip data](https://s3.amazonaws.com/tripdata/index.html) and daily ridership and membership data from the last quarter of 2014 to the third quarter of 2018 included on the home page (also .csv files). We also gathered climate and weather data from the National Centers for Environmental Information (part of the National Oceanic and Atmospheric Administration) from the last quarter of 2914 to the third quarter of 2018 included by ordering the data on [NOAA portal](https://www.ncdc.noaa.gov/cdo-web/) and selecting precipitation, temperature, snow and wind information for the Central Park station.
+The general topic of transportation and commuting is prevalent in the world of data analysis, because it is a perfect way to get large-scale data and extract trends of which we can easily understand the meaning, and because it touches everyone, since everyone travels everyday in a way or another. We have seen studies done with subway data, or taxi data. However, we wanted to study an alternative means of transport, that is often overlooked: cycling. Analyzing the Citi Bike bicycle sharing system, which accounts for a large part of the bicycle traffic in New York, and which is the largest bicycle sharing system in the United States, was the logical continuation to that idea. Moreover, the fact that there is a large quantity of data of good quality directly available on Citi Bike's website, coupled with the status of Corentin, one of our group members, as an annual Citi Bike subscriber, steered us towards that subject among the other ideas we had. 
+
+Our team is made of three members. Redouane Dziri (rd2853) took charge of the main part of the data gathering, pre-processing and data quality analysis and cleaning, as well as analyzing seasonal patterns and the effect of weather in the main analysis part. Arnaud Stiegler (aes2329) analyzed the geographical patterns in the data, as well as coding the interactive component of the project. Finally, Corentin Llorca (cl3783) undertook the user types analysis, with age, gender and customer/subscriber status, as well as writing the executive summary and organizing the report.
+
+# II. Description of the data
+
+Our data was collected from [Citibike system data](https://www.citibikenyc.com/system-data). We downloaded trip data (.csv files) from the months of February, July and October 2018 from [trip data](https://s3.amazonaws.com/tripdata/index.html) and daily ridership and membership data from the last quarter of 2014 to the third quarter of 2018 included on the home page (also .csv files). We also gathered climate and weather data from the National Centers for Environmental Information (part of the National Oceanic and Atmospheric Administration) from the last quarter of 2014 to the third quarter of 2018 included by ordering the data on [NOAA portal](https://www.ncdc.noaa.gov/cdo-web/) and selecting precipitation, temperature, snow and wind information for the Central Park station.
 
 To prepare the data for use, we concatenated the daily ridership and membership data that was available in one file per quarter per year. We kept decided to remove information on the number of 3-days and 7-days passes bought per day as these were not available across most quarters and we weren't convinced of the usefulness of keeping that information. We also had to deal with inconsistencies in terms of date format and had to level them out across all files in order to merge them with no distorsion and false readings.
 
 We chose to refactor the trip data from the three months we selected in 2018 by building a separate file saving the information regarding Citibike stations and keeping only stations id in the main table to avoid redundancy - which saved a considerable amount of memory and made computations in R smoother.
 
-```{r}
-library(readr)
-library(dplyr)
-```
+All of those steps were stored in a script called preprocessing.R, which should be run within a directory containing a ''data" folder which includes :
+
+* the February, July and October 2018 trip data
+* the weather data 
+* a folder named "raw_summary_stats" containing the daily ridership and membership data files, from the 4th quarter of 2014 to the third quarter of 2018
+  
+Please be careful as the R working directory must be changed to the directory containing this file, the script and the data folder.
+
+
+# III. Analysis of data quality
+
+Before conduction any exploratory analysis we need to assess data quality. A quick survey of the weather data reveals that the data is tidy, with no outliers and no missing values. 
 
 ```{r}
 # Import the data
 non_clean_df <- read_csv("data/2018-feb-jul-oct-citibike-trips.csv", col_types = 'iTTicnnicnnici?')
 ```
 
-## 3. Analysis of data quality
-
-Before conduction any exploratory analysis we need to assess data quality. A quick survey of the weather data reveals that the data is tidy, with no outliers and no missing values. 
-
 The trip data fetched from February, July and October 2018 on the other hand has a few notable mishaps. The coding for categorical data is consistent - no multiple codings for the same item - and the data dictionary available online explains each individual variable clearly as well as the levels of categorical variables.
 
-### 1. Missing data
+## 1. Missing data
 
 We started data quality analysis by looking at the **missing data patterns**.
 
@@ -55,7 +78,7 @@ visna(non_clean_df)
 
 The only missing data pattern apart from no missing data appears to be missing ids for the start and end stations. The first question we asked ourselves when seeing this is: **why is only the id of the station missing and not the station name or longitude/latitude**?
 
-#### 1. Missing station ids
+### 1.1. Missing station ids
 
 To understand it better we peeked at the rows with missing start and end station ids.
 
@@ -67,7 +90,7 @@ So we tried to look up those stations by cross referencing their longitude/latit
 
 **We will separate this data from the rest and explore it separately as it relates to a whole other way of envisioning bike sharing**.
 
-#### 2. Missing gender
+### 1.2. Missing gender
 
 After closer inspection we realized some gender information was also missing. It was not detected early on because the missing data was not encoded as NA. Rather missing genders were input as 0. Males are 1s and Females are 2s. We first changed the encoding to a more transparent one and looked at how many values for gender are missing.
 
@@ -75,11 +98,11 @@ There is a significant number of missing values in the gender column. This shoul
 
 There is no reason to discard the data with missing gender; the trips' validity is not brought into question. We can not think of any satisfactory way to impute missing genders without risking to distort the data significantly so we will just filter it out whenever gender comes into play.
 
-### 2. Outliers
+## 2. Outliers
 
 Next we dived into detecting outliers.
 
-#### 1. Age
+### 2.1. Age
 
 Citibike clearly states in its Help Center: "You have to be 16 years or older to ride Citi Bike." While we are not convinced this is really enforced and is more of a liability protection for Citibike than anything else, we do know that one requires to log in their smartphone and pay with credit/debit card to ride a bike. So we will assume that the bulk of riders is 16 or older. The App should not let you log in if you indicate a younger age anyways. There shouldn't be younger riders in our data. This can only be checked grossly as data contains only the birth year of the user and not their month or day of birth.
 
@@ -91,7 +114,7 @@ We have to be watchful of people that register with a very old age.
 
 There are around 5,000 trips for people over 90 years old. Whilst it is very possible that a senior 90 or older would rent out a bike, the validity of the age data in this range is seriously doubtful. Nevertheless there is no reason the data on the trips themselves should be wrong or corrupted so we will keep them (we could remove them as they represent less than 0.2 % of the data). We should just remember to filter them out whenever age is a factor in our analysis.
 
-#### 2. Trip Duration
+### 2.2. Trip Duration
 
 Now more about the trips themselves: we wish to examine outliers in terms of trip duration. **Ideally we would remove trips under 90 seconds and over 2 hours**.
 
@@ -103,11 +126,11 @@ There are a little less than 30,000 trips registered that last less than 90 seco
 
 There are a little less than 13,000 trips which last more than 2 hours. We will also remove those.
 
-### 3. User characteristics distribution
+## 3. User characteristics distribution
 
 To get a better idea of the data at hand we decided to also include the **distribution of user characteristics** in our preliminary data analysis.
 
-#### 1. Gender
+### 3.1. Gender
 
 ```{r}
 library(ggplot2)
@@ -122,19 +145,19 @@ levels(non_clean_df$gender) <- c("Missing", "Male", "Female")
 ggplot(non_clean_df, aes(x = gender)) + geom_bar(fill = "lightblue") + xlab("") + theme_bw()
 ```
 
-There are significantly more males using Citibike than females. We will keep this in mind as it might provide insight in some findings. Again we see there is a significant number of missing gender values.
+Again we see there is a significant number of missing gender values.
 
-Again, users can input whichever gender they wish, there is no identity verification. Nevertheless we feel that most people would not lie about their identified gender.
+We could make the observation that users can input whichever gender they wish, there is no identity verification. Nevertheless we feel that most people would not lie about their identified gender.
 
-#### 2. User types
+### 3.2. User status
 
 ```{r, fig.width = 6, fig.height = 2.5}
 ggplot(non_clean_df, aes(x = usertype)) + geom_bar(fill = "maroon") + xlab("") + theme_bw()
 ```
 
-There are significantly more Subscribers (year-long subscribers) than Customers (Pass or Single Trip users). This will be interesting when we try to figure out commuters v. tourists habits and differences in Citibike usage.
+We don't notice any anomalies here. The Subscriber / Customer status is a feature that's always going to have a value, and that won't have many errors, since the Citi Bike system knows which type of user is using the bike when one is rented - it isn't a value that depends on the user entering it. 
 
-#### 3. Age
+### 3.3. Age
 
 After removing outliers as discussed above:
 
@@ -148,19 +171,207 @@ ggplot(non_clean_df, aes(x = `birth year`)) + geom_histogram(fill = "orange", co
 
 The first thing we notice is the outlier value for 1969. We think this might have been the default age value for which users did not have to interact with the system to change their age. Many would have agreed to that value without a second glance. Any analysis based on the age of users or their birth years will take this into account, probably by altogether ignoring this value since it probably includes data for all ages. 
 
-The distribution shows that there are few users under 20 and a long tail peaking around 25 (the age depends on the time of registration so this is a rough estimate based on the fact that Citibike exists since 2013). We expected fewer adults over 60 to use Citibike.
 
-## 4. Exploratory Data Analysis
+The data cleaning steps that we have selected (removing short and long trips, assigning more explicit values to genders, removing dockless bikes and turning birth date to age) can be executed by running the data_cleaning.R script. Again, the script must be placed in the same directory as the "data" folder previously mentioned, and R's current directory must be set to that same directory. The output file for the trip data is then "data_concise_cleaned.R".
+
+# IV. Exploratory Data Analysis
+
+Let's first load the data we will need : 
+
+* The trip data file for Feb-Jul-Oct 2018 
+
+```{r}
+trips <- read_csv("../data/concise_trips_cleaned.csv")
+```
+
+* The daily ridership and membership summary data 
+
+```{r}
+daily <- read_csv("../data/summary_stats_per_day.csv")
+```
+
+* The stations info 
+
+```{r}
+stations <- read_csv("../stations_info.csv")
+```
+
+* The weather data 
+
+```{r}
+weather <- read_csv("../data/concise_weather.csv")
+```
 
 
-## 5. Executive summary
+## 4. The effect of weather on Citi Bike users
+
+Surely people's use of Citi Bikes is greatly dependent on weather conditions: there will probably be a lot less trips on rainy days than on dry days, the more snow on the ground the less likely people are to rent a bike. Those are hypotheses that we want to test through exploration of the data collected from the Central Park weather station and Citibike's data.
+
+We will first explore how the number of trips varies with the precipitation level. The data used here is the number of trips and precipitation level in inches from October 2014 (included) until October 2018 (not included).
+
+\bigskip
+
+```{r, message = FALSE, warning = FALSE}
+weather$prep_factor <- round(weather$PRCP, 1)
+weather$prep_factor2 <- round(weather$PRCP, 2)
+```
+
+```{r}
+colnames(data)[1] <- "DATE"
+```
+
+```{r}
+data_weather <- merge(daily, weather, by = "DATE")
+```
+
+```{r}
+dw1 <- data_weather %>% group_by(prep_factor) %>% summarize(avg_trips = mean(Trips))
+```
+
+```{r, warning = F, fig.height = 4, fig.width = 7}
+pl <- ggplot(data = dw2, aes(x = prep_factor, y = avg_trips / 1000))+ 
+      geom_point(color = "royalblue") + xlim(0, 1.5) + 
+      ggtitle("The decreasing trend of number of trips with precipitation level") + 
+      ylab("Average daily trips (in thousands)") + 
+      xlab("Daily precipitation (inches)") + 
+      geom_smooth(method = "lm", se = F, color = "darkblue") + 
+      theme(plot.title = element_text(hjust = 0.5))
+
+pl
+```
+
+\begin{center}
+\it{Fig 4.1. The average daily number of trips against the precipitation level (bucketed with a binwidth of 0.1 inch)}
+\end{center}
+
+\bigskip
+
+On top of the aggregated data points, we plotted a linear smoother that visually highlights the decreasing trend in the average number of daily trips against precipitation. There is a linear-like behavioral trend but this should be interpreted as a ground-truth uncovered in the data. The higher the value of daily precipitation, the less data was available for gathering (there are few number of days with high levels of precipitation in New York past a certain threshold, at least during the past 5 years). The attempt at modelling represented by the straight line fails to capture this weakness in the data - which also explains the outlier around 1.3 inches of daily precipitation.
+
+Nevertheless, we can interpret this plot as telling us that the average number of daily trips decreases with precipitation, in approximation linearly. One could expect the decrease to be quite sudden as daily precipitation slowly increases from 0 and then the trend to be less obvious, or less abrupt. After all, the difference between no rain and rain, and rain at 0.7 inches and rain at 0.8 inches is not the same for the human experience of biking. The former is much more informative and can act as a powerful detterent for bike use while the latter is harder to evaluate and is less likely to have a big impact on a person's decision to rent a bike.
+
+The plot suggests that some people either aren't phased by rain very much or that renting Citi Bikes is a necessity for some users - either for timing reasons or unavailability of transport alternatives for their routes. Therefore, we expect that the effect of rain might be stronger during the weekends, during which people generally rent bikes for fun, versus morning and evening rush hours during weekdays when people have to leave home to work and vice-versa within a restricted timeframe.
+
+We will proceed to test this hypothesis in the following, for the months of February, July and October 2018 for which we have data on every trip - including the exact timing within the day.
+
+**Does precipitation affect the number of trips decrease similarly during morning rush hour and across the weekend ?**
+
+We plotted the average number of trips against precipitation, distinguishing trips done during morning rush hour and trips done during the weekend. The aim here is to check whether Citi Bike users are more discouraged by precipitation when taking trips during the weekend, which would correspond to leisure trips.
+
+\bigskip
 
 
-## 6. Interactive component
+```{r}
+trips <- trips %>% mutate(DATE = as.Date(starttime))
+```
+
+```{r}
+trips_w <- merge(trips, weather, by = "DATE")
+```
+
+```{r}
+trips_morning1 <- trips_w %>% filter(wday(starttime) %in% c(2, 3, 4, 5, 6),
+                                     hour(starttime) < 10,
+                                     hour(starttime) > 6)
+trips_morning2 <- trips_w %>% filter(wday(starttime) %in% c(2, 3, 4, 5, 6),
+                                     hour(starttime) < 20,
+                                     hour(starttime) > 16)
+trips_morning <- rbind(trips_morning1, trips_morning2)
+```
+
+```{r}
+trips_weekend <- trips_w %>% filter(wday(starttime) %in% c(1, 7))
+```
+
+```{r}
+dw2 <- trips_morning %>% group_by(DATE) %>% summarize(nb_trips = n())
+dw2 <- merge(dw2, weather, by = "DATE")
+dw2 <- dw2 %>% group_by(PRCP) %>% summarize(avg_trips = mean(nb_trips))
+dw2 <- dw2 %>% mutate(when = "Weekdays (during rush hours only)")
+```
+
+```{r}
+dw3 <- trips_weekend %>% group_by(DATE) %>% summarize(nb_trips = n())
+dw3 <- merge(dw3, weather, by = "DATE")
+dw3 <- dw3 %>% group_by(PRCP) %>% summarize(avg_trips = mean(nb_trips))
+dw3 <- dw3 %>% mutate(when = "Weekends")
+```
+
+```{r}
+dw4 <- rbind(dw2,dw3)
+```
+
+```{r, warning = F, message = F, fig.height = 4, fig.width = 7}
+p2 <- ggplot(data = dw4, aes(x = PRCP, y = avg_trips / 1000)) + 
+      ggtitle("Commuters are less phased by rain")+ 
+      ylab("Average daily trips (in thousands)") + 
+      xlab("Daily precipitation (inches)") + xlim(0,0.08) + 
+      geom_smooth(method = "loess", se = F, color = "darkblue") + 
+      theme(plot.title = element_text(hjust = 0.5)) + 
+      geom_vline(xintercept = 0.01, color = "darkred") + 
+      facet_wrap(~when)
+p2
+```
+
+\begin{center}
+\it{Fig 4.2. The average daily number of trips against the precipitation level faceted on day of the week (distinguishing weekdats and weekends). The red vertical lines are drawn for inch = 0.01, to highlight behaviour of riders from no rain (inch = 0) to a drizzle - which some might see as a sign of more rain to come.}
+\end{center}
+
+\bigskip
+
+We see that the first signs of rain have much more of an impact on bikers during the weekend than it does on commuters. Commuters that have to get from point A to point B are probably expecting to spend less time on their bikes than bikers for fun on the weekends. The first drizzle does not discourage most of them, which is reflected by a non-decreasing trend as daily precipitation slowly increases from 0 - even increasing ! 
+
+On the other hand, tourists and bikers for fun on the weekends probably expect to spend a lot of time biking and enjoying their ride. The first signs of rain are seen as bad omens for the weather to come and the number of daily trips on those days quickly decreases as daily precipitation increases from 0 to 0.01 inches. It increases after 0.01 inches but there are very few data points with high precipitation on weekends in our data so we should not blindly accept this smoother model as an accurate representation for reality for those values of daily precipitation.
+
+Commuters are rapidly discouraged by the rain starting at 0.02 inches until 0.05 inches. There aren't too many days with more precipitation in our data so the following increasing slope could very well just be an artefact of overfitting the little data available.
+
+**Are visitors sensitive to temperature? How does temperature impact 24 hour passes sales?**
+
+After examining the effect of precipitation on the number of trips by Citibike users we will turn to the effect of another climatic feature which we believe might have a significant impact on riding patterns: temperature. We will focus on whether temperature affects the number of 24-hour passes bought each day. Those are mostly purchased by tourists and therefore, we expect our exploration to help us gain new understanding of how New York City visitors use the ride share network.
+
+\bigskip
+
+```{r}
+dw1 <- dw1 %>% filter(!is.na(dw1$`24 Hour Passes`))
+```
+
+```{r}
+dw1$temp_factor <- cut(x = dw1$TMAX, breaks = seq(0, 100, 3))
+levels(dw1$temp_factor) <- seq(0, 96 ,3)
+```
+
+```{r}
+dw5 <- dw1 %>% group_by(temp_factor) %>% summarize(avg_sold = mean(`24 Hour Passes`))
+dw5$temp_factor <- as.integer(as.character(d$temp_factor))
+```
+
+```{r, fig.height = 4, fig.width = 7}
+p3 <- ggplot(dw5, aes(temp_factor, avg_sold)) + geom_col(fill = "aquamarine4") + 
+       xlab("Temperature (°F)") + ylab("Average number of 24 Hour Passes sold") + 
+       ggtitle("Sales thaw as temperature increases") + 
+       theme(plot.title = element_text(hjust = 0.5))
+
+p3
+```
+
+\begin{center}
+\it{Fig 4.3. The average number of 24 Hour Passes sold by buckets of temperature (of size 3 degrees Fahrenheit)}
+\end{center}
+
+\bigskip
+
+We see that as temperature increase from 12 degrees to around 80 degrees, average sales of 24 hour passes increase (first slowly, and then more rapidly). We expected low sales for low temperatures as fewer people venture out in the cold and riding in the cold can worsen its effects by amplifying wind speed. Furthermore, snow is often associated with low very low temperatures, which makes biking around the city even more unpractical. 
+
+Use of Citi bikes starts to decrease around 80 degrees, with extreme temperatures seemingly yielding less 24 Hour passes: visitors are less likely to bike under the harsh Summer New York sun. Although this could also be a discrepancy due to the lack of sufficient data for those hot days that are in small numbers across the five last years compared to the other temperature bins.
+
+# V. Executive summary
+
+
+# VI. Interactive component
 
 Here is the link to the interactive component for this project :
 
 (link)
 
-## 7. Conclusion
+# VII. Conclusion
 
