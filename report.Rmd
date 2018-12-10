@@ -1018,7 +1018,22 @@ trip times ages, evolution of trip n (annual trends), trip durations sub/cust, m
 
 Here is the link to the interactive component for this project :
 
-(link)
+https://astiegler.shinyapps.io/user_behavior/
+
+This interactive component is a tool aiming at conveniently comparing the two different user types, and understanding how their use of citibikes differs. Since subscribers have a year-round subscription, our intuition is that subscribers are New Yorkers using citibikes as a means of transportation. On the contrary, customers are likely to be tourists that use citibikes for leisure. 
+
+Our tool proves and illustrates that point by showing the features that are the most representative of the differences. The distribution of trips per weekday shows that subscribers use citibikes primarily during the working days while customers use citibikes primarily during week-ends. 
+The second feature is a map that shows the most popular stations for both user type during summer and winter: during both season, the reason are relatively stable, and shows that the area covered by those most popular stations completely depend on the user type.
+Finally, the last feature is a map of the most popular trips for each user type: while customers trips are close to Central Park and the Hudson River, they are all in Midtown and Brooklyn for subscribers.
+
+Throughout those plots, we can clearly identify trends that are closely related to the usage each user type has. Moreover, combining them in an interactive component allows the user to quickly grasp the difference between the user types, even when they are more subtle: for instance, one of the most common trip for subscribers is located in Governor's island which is both informative and surprising: informative because it is a clear touristic location, but surprising because it is not the first trip anyone would think about as a top ten in New York.
+
+On the technical aspects, we tried to use a variety of techniques: we used bar charts, interactive maps from Leaflet and static maps from ggmap, and used the datasets that we previously used for the static report.
+For the bar chart, we created "mini datasets" for memory purposes: the radio buttons will change the dataset that is used for plotting the bar chart. Not only does it reduce the amount of memory necessary for the app, but it also improves dramatically the loading time when using the radio buttons. For the second plot, we used Leaflet that provides a very convenient tool for plotting interactive maps. The last tool is ggmap: we ran into a series of problems, mainly due to the fact that the CRAN version of ggmap is not compatible with the Google API anymore (there had been some recent changes). As a consequence, we had to use the github version of ggmap. The main reason we used ggmap is that we can compute realistic trips for bikes (there is an option for 'bike' when computing the trips). Since we need to compute each route separately (the function is not vectorized), we have to manually recreate those trips within the app code (located before the definition of the ui).
+The main challenge was to reduce as much as possible the amount of memory necessary to run the application on shinyapps: because of the number of libraries, and the size of the datasets necessary, we had memory issue with shinyapps. To fix the issue, we created tailored datasets for each visualization to limit the amount of memory needed, and try to avoid any unnecessary libraries.
+The second challenge was to compute the trips for the ggmap plot: because we need to call the Google API to generate each trip, it requires a lot of time and shinyapps limits the initialization time to 1 min for any app. Therefore, we had to reduce the number of trips computed (from 150 to 35) so that Shinyapps would launch the app.
+
+Therefore, the first future work would be to find a way to add more trips to the ggmap, either by speeding the computation of the trips, or by finding a way to save into a file those trips. It would also be necessary to reduce the loading time for the ggmap which is a bit too long as of now. Then, the next big step would be to rework the datasets we used for the report so that they are more convenient for the interactive part: we could then plot time series representing the number of trips throughout the years and creating a slider to let the user navigate through the years to get a more insightful overview of the data. However, because of memory limitations, it is a complex job which is going to require some time.
 
 # VII. Conclusion
 
