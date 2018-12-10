@@ -859,7 +859,7 @@ ct_merged_shorted_c['to'] <- paste(ct_merged_shorted_c$latitude.y,',',
 
 
 
-```{r  width=8, height=10, cache=FALSE, results=FALSE, comment=FALSE, warning=FALSE,message=FALSE,echo=FALSE,fig.width=10, fig.height=17}
+```{r fig.width=10, fig.height=10}
 library(stringr)
 options(expressions=10000)
 
@@ -942,12 +942,13 @@ concise_trips_merged$dirWE <- abs(concise_trips_merged$latitude.y -
 ```{r}
 p54 <- ggplot(concise_trips_merged,
               aes(x=concise_trips_merged$dirNS,
-                  color=concise_trips$usertype))+
+                  color=concise_trips_merged$usertype))+
        geom_density() + 
        xlab("Difference in Longitude")+
        ylab("Density")+
        ggtitle("Difference in Longitude per usertype")+
-       theme(plot.title = element_text(hjust = 0.5))
+       theme(plot.title = element_text(hjust = 0.5)) + 
+       scale_color_discrete(name = "User Type")
 
 p54
 rm(p54)
@@ -962,7 +963,9 @@ p55 <- ggplot(concise_trips_merged,
        xlab("Difference in Latitude")+
        ylab("Density")+
        ggtitle("Difference in Latitude per usertype")+
-       theme(plot.title = element_text(hjust = 0.5))
+       theme(plot.title = element_text(hjust = 0.5)) + 
+       scale_color_discrete(name = "User type")
+p55
 rm(p55)
 ```
 
@@ -981,14 +984,18 @@ concise_trips_merged <- subset(concise_trips_merged,
                                select=-c(name.y,name.x,
                                          longitude.x,longitude.y,
                                          latitude.x,latitude.y))
+```
+
+```{r}
 p56 <- ggplot(concise_trips_merged,
-              aes(x=concise_trips$distance,
-                  color=concise_trips$usertype))+
+              aes(x=concise_trips_merged$distance,
+                  color=concise_trips_merged$usertype))+
        geom_density() + 
        xlab("Distance")+
        ylab("Density")+
        ggtitle("Difference in distance per usertype")+
-       theme(plot.title = element_text(hjust = 0.5))
+       theme(plot.title = element_text(hjust = 0.5)) + 
+       scale_color_discrete(name = "User Type")
 
 p56
 rm(p56)
@@ -998,9 +1005,14 @@ If we plot the distribution of distance for both customers and subscribers, it c
 
 Therefore, there is a genuine discrepancy between subscribers and customers which attest that there are two different ways of using citibikes: short rides or more lengthy rides, and it confirms that citibikes are not only used by tourists, but also by New Yorkers as a way of commuting.
 
+```{r}
+rm(concise_trips,concise_trips_merged,
+   concise_trips_merged_c,concise_trips_merged_s)
+```
 
 # V. Executive summary
 
+trip times ages, evolution of trip n (annual trends), trip durations sub/cust, most frequent trips subs/cust
 
 # VI. Interactive component
 
