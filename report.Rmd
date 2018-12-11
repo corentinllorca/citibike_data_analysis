@@ -31,7 +31,7 @@ library(stringr)
 
 # I. Introduction 
 
-The general topic of transportation and commuting is prevalent in the world of data analysis, because it is a perfect way to get large-scale data and extract trends of which we can easily understand the meaning, and because it touches everyone, since everyone travels everyday in a way or another. We have seen studies done with subway data, or taxi data. However, we wanted to study an alternative means of transport, that is often overlooked: cycling. Analyzing the Citi Bike bicycle sharing system, which accounts for a large part of the bicycle traffic in New York, and which is the largest bicycle sharing system in the United States, was the logical continuation to that idea. Moreover, the fact that there is a large quantity of data of good quality directly available on Citi Bike's website, coupled with the status of Corentin, one of our group members, as an annual Citi Bike subscriber, steered us towards that subject among the other ideas we had. 
+The general topic of transportation and commuting is prevalent in the world of data analysis, because it is a perfect way to get large-scale data and extract trends of which we can easily understand the meaning, and because it affects everyone, since everyone travels everyday in a way or another. We have seen many studies done with subway or taxi data. However, we wanted to study an alternative means of transport, that is often overlooked: cycling. Analyzing the Citi Bike bicycle sharing system, which accounts for a large part of the bicycle traffic in New York, and which is the largest bicycle sharing system in the United States, was the logical continuation to that idea. Moreover, the fact that there is a large quantity of data of good quality directly available on Citi Bike's website, coupled with the status of Corentin, one of our group members, as an annual Citi Bike subscriber, steered us towards that subject among the other ideas we had.
 
 Our team is made of three members. Redouane Dziri (rd2853) conducted the bulk of the data gathering, pre-processing and data quality analysis and cleaning, analyzed seasonal patterns and the effect of weather and wrote concluding remarks. Arnaud Stiegler (aes2329) analyzed the geographical patterns in the data,and produced the interactive component of the project. Finally, Corentin Llorca (cl3783) undertook the user types analysis, with age, gender and customer/subscriber status, wrote the executive summary and organized the report.
 
@@ -211,7 +211,7 @@ stations <- read_csv("./data/stations_info.csv")
 weather <- read_csv("./data/concise_weather.csv")
 ```
 
-The aim of the exploratory data analysis step is to gain insight on the general question of "How do people use Citi Bike ?". This includes looking at the general behavior of the users against outside parameters like seasons, days of the week, weather, etc.; byt also looking at the different user types for the bike sharing system, and checking whether they have different behaviors in similar outside circumstances. 
+The aim of the exploratory data analysis step is to gain insight on the general question of "How do people use Citi Bike?". This includes looking at the general behavior of the users against outside parameters like seasons, days of the week, weather, etc. as well as looking at the different user types for the bike sharing system, and checking whether they have different behaviors in similar outside circumstances. 
 
 ## 1. General usage trends through time
 
@@ -288,7 +288,7 @@ p14
 rm(p14)
 ```
 
-And, indeed, our hypothesis gets confirmed : there is a large part of the user base that uses Citi Bike for commuting, as evidenced by the two clear modes of the repartition of daily trip times, around the traditional commuting hours of 8 am and 6 pm. In order to strenghten that hypothesis, we also want to display the same plot, but faceted between weekdays and the weekend. We expect the modes to be less apparent in the density for the weekend. 
+And, indeed, our hypothesis seems supported by the data : there is a large part of the user base that uses Citi Bike for commuting, as evidenced by the two clear modes of the repartition of daily trip times, around the traditional commuting hours of 8 am and 6 pm. In order to strenghten that hypothesis, we also want to display the same plot, but faceted between weekdays and the weekend. We expect the modes to be less apparent in the density for the weekend. 
 
 ```{r}
 weekend = c("Saturday","Sunday")
@@ -309,9 +309,9 @@ p15
 rm(p15)
 ```
 
-Indeed, we can see that the modes are much less present during the weekend - even invisible - thus confirming that they correspond to commuting. Instead, we get an unimodal curve with a flat mode from 1 pm to 5 pm approximately. Moreover, we can observe that people bike more at night during the weekend. 
+Indeed, we can see that the modes are much less present during the weekend - they disappear completely - thus confirming that they correspond to commuting. Instead, we get an unimodal curve with a flat mode from 1 pm to 5 pm approximately. Moreover, we can observe that people bike more late at night - from midnight to 4 am - during the weekend. 
 
-In this part, we have gained the insight that a majority of Citi Bike users use the system in order to go to work every day, as well as observing that there are a lot less people using the system in the winter. We'll keep that in mind as we go through the rest of our research.
+In this part, we have gained the insight that a majority of Citi Bike users use the system in order to go to work every day, as well as observing that there are a lot less people using the system in the winter. We'll keep that in mind as we go through the rest of our exploration.
 
 ## 2. The effect of weather on Citi Bike users
 
@@ -357,7 +357,7 @@ rm(p21)
 
 On top of the aggregated data points, we plotted a linear smoother that visually highlights the decreasing trend in the average number of daily trips against precipitation. There is a linear-like behavioral trend but this should be interpreted as a ground-truth uncovered in the data. The higher the value of daily precipitation, the less data was available for gathering (there are few number of days with high levels of precipitation in New York past a certain threshold, at least during the past 5 years). The attempt at modelling represented by the straight line fails to capture this weakness in the data - which also explains the outlier around 1.3 inches of daily precipitation.
 
-Nevertheless, we can interpret this plot as telling us that the average number of daily trips decreases with precipitation, in approximation linearly. One could expect the decrease to be quite sudden as daily precipitation slowly increases from 0 and then the trend to be less obvious, or less abrupt. After all, the difference between no rain and rain, and rain at 0.7 inches and rain at 0.8 inches is not the same for the human experience of biking. The former is much more informative and can act as a powerful detterent for bike use while the latter is harder to evaluate and is less likely to have a big impact on a person's decision to rent a bike.
+Nevertheless, we can interpret this plot as telling us that the average number of daily trips decreases with precipitation, in approximation linearly. One could expect the decrease to be quite sudden as daily precipitation slowly increases from 0 and then the trend to be less obvious, or less abrupt. After all, the difference between no rain and rain, and rain at 0.7 inches and rain at 0.8 inches is not the same for the human experience of biking. The former is much more informative and can act as a powerful deterrent for bike use while the latter is harder to evaluate and is less likely to have a big impact on a person's decision to rent a bike.
 
 The plot suggests that some people either aren't phased by rain very much or that renting Citi Bikes is a necessity for some users - either for timing reasons or unavailability of transport alternatives for their routes. Therefore, we expect that the effect of rain might be stronger during the weekends, during which people generally rent bikes for fun, versus morning and evening rush hours during weekdays when people have to leave home to work and vice-versa within a restricted timeframe.
 
@@ -476,13 +476,13 @@ rm(data_weather,dw1,dw2,dw3,dw4,dw5)
 
 ## 3. Age and gender : the demographics of Citi Bike users 
 
-Our next analysis will be to look at the age and gender of Citi Bike users. Please note that user information is only required within the yearly subscription plan, meaning that the data that will be shown in this part will only be the trips done by subscribers. However, those represent about 90% of all trips, so there should be no issue in generalizing the insights gained here. 
+We will now look at the age and gender of Citi Bike users. Please note that user information is only required within the yearly subscription plan, meaning that the data that will be shown in this part will only be the trips done by subscribers. However, those represent about 90% of all trips, so there should not be too much of an issue in generalizing the insights gained here. 
 
 ### 3.1. Anomalies in the data
 
-A big issue with this data is that the users making the trips aren't individually identified, meaning that what we're plotting isn't the age/gender distribution of Citi Bike subscibers, but rather the number of trips taken by people from each individual age/gender. Getting for instance a high count for men compared to women doesn't necessarily mean that there are more men than women using Citi Bike, but rather that there are more trips being taken by men than women.
+A big issue with this data is that the users making the trips aren't individually identified, meaning that what we're plotting isn't the age/gender distribution of Citi Bike subscibers, but rather the number of trips taken by people from each individual age/gender. Getting for instance a high count for men compared to women doesn't necessarily mean that there are more men than women using Citi Bike, but rather that there are more trips being done by men than women.
 
-As found in our data cleaning, there is a lot of missing data on gender, and there are a lot of outliers and wrong-looking data on age. For this section, we will then be using a reduced version of the trip database. The data we'll be excluding will be the trips for which the gender is not filled in, and those for which the user is older than 80 years old. We also had a problem with the birth year 1969 (age 49) being over-represented, but let's see if removing the data in which gender is missing solves the problem. We first apply our filter, then plot a histogram of user age, with age 49 being highlighted.
+As found in our data cleaning, there is a lot of missing data on gender, and there are a lot of outliers and suspicious data on age. For this section, we will then be using a reduced version of the trip database. The data we'll be excluding will be the trips for which the gender is not filled in, and those for which the user is older than 80 years old. We also had a problem with the birth year 1969 (age 49) being over-represented, but let's see if removing the data in which gender is missing solves the problem. We first apply our filter, then plot a histogram of user age, with age 49 being highlighted.
 
 ```{r}
 trips_ag <- trips %>% 
@@ -684,7 +684,7 @@ rm(p44)
 
 Once again, we can notice a clear difference between both repartitions. Indeed, subscribers tend to favor shorter trips, with the overwhelming majority of trips taken being around 10 to 15 minutes long - that might correspond to the time for commuting. Customers, on the other hand, take longer trips, with the mode being around 25 minutes. This can be explained by the fact that we consider some customers to be tourists, and tourists would explore the city much more than residents, thus taking longer-lasting trips.
 
-Moreover, we can notice that customers are generally much keener on taking long trips, going as far as to make them longer than the time that is included in the plan. Indeed, even though we do notice a significant dropoff between the 25-30 and 30-35 minutes bins, a significant part of customer trips are still longer than 30 minutes, with some of them going well past 1 hour. As for subscribers, they usually take very few trips longer than 45 minutes, which is their alloted time limit.
+Moreover, we can notice that customers are generally much more keen on taking long trips, going as far as to make them longer than the time that is included in the plan. Indeed, even though we do notice a significant dropoff between the 25-30 and 30-35 minutes bins, a significant part of customer trips are still longer than 30 minutes, with some of them going well past 1 hour. As for subscribers, they usually take very few trips longer than 45 minutes, which is their alloted time limit.
 
 Something that might also reveal something would be the average trip length for each hour of the day. Let's show that plot : 
 
@@ -709,7 +709,7 @@ First of all, we get a confirmation that the average trip is longer for customer
 
 ## 5. Geographical trends
 
-In this part, we will try to identify geographical trends to try and understand what use people have of the cibibikes. Based on New York geography and its subway tracks, we expect to find some proofs that Citi Bikes are a means of transportation for routes that are harder to do with subways, for instance East-West commutation. Furthermore, we will try to identify trends that shows that bikes are both a recreational and a practical way of commuting in New York. For the following study, we will focus on geograpical features, such as the station locations, as well as the route and the distance done by users (we do discard any seasonality effect by aggregating over the study over the 3 months we chose previously).
+In this part, we will try to identify geographical trends in the use of Citi Bikes. Based on New York geography and its subway tracks, we expect to find some evidence that Citi Bikes are a means of transportation of choice for routes that are harder - time-wise and effort-wise -  to do with subways, for instance East-West commutation in Manhattan. Furthermore, we will try to identify trends that show that bikes are both a recreational and a practical way of commuting in New York. In the following study, we will focus on geograpical features, such as the station locations, as well as the route and the distance traveled by users (we discard any seasonality effect by aggregating over the study over the 3 months we chose previously).
 
 First of all, we need to join the station info data with the trip data, in order to get the correct latitudes and longitudes for each trip. 
 
@@ -730,7 +730,7 @@ concise_trips_merged <- merge(x = concise_trips_merged, y = stations, by = 'end_
 
 ### 5.1. Most active stations
 
-First of all, we can visualize the stations that are the most 'active': those are the stations that have the highest traffic of Citi Bikes (in terms of start and end for each station).
+We will visualize the stations that are the most 'active': those are the stations that have the highest traffic of Citi Bikes (in terms of numbers of start and end for each station).
 
 ```{r}
 #COMPUTING THE MOST STARTED STATIONS
@@ -794,14 +794,14 @@ p51
 rm(p51)
 ```
 
-From the map, we can see that the there are multiple 'active' zones but the general trend is that Midtown is the most active part of Manhattan. There is also a lot of activity in Downtown, along Central Park and in the neighborhoods of Brooklyn that are close to Manhattan. Areas close to Central Park, or in Brooklyn are zones that we can consider to be mostly visited by tourists. However, the high activity of citibikes in Midtown could be further evidence that citibikes are used for commuting since Midtown is a working area of Manhattan. Furthermore, the activity in Downtown also seems more likely to be the result of commuting then visiting.
+From the map, we can see that the there are multiple 'active' zones but the general trend is that Midtown is the most active part of Manhattan. There is also a lot of activity in Downtown, along Central Park and in the neighborhoods of Brooklyn that are close to Manhattan. Areas close to Central Park are zones that we can consider to be mostly visited by tourists. However, the high activity of citibikes in Midtown could be further evidence that Citi Bikes are used for commuting since Midtown is a working area of Manhattan. Furthermore, the activity in Downtown also seems more likely to be the result of commuting than visiting.
 
 A natural follow-up question would be to try and find whether the most active station change between customers and subscribers, and also whether they change depending on the season. We can do just that by displaying the same map, with markers of different colors for customers and subscribers, and faceting it by season.
 
 
 ### 5.2. Most commons routes
 
-To go further in our analysis, we can visualize the most common trips made by citibikes users. To do so, we will gather for each trip the start station and the station of arrival, and compute the most likely route the users took by using the route function from ggmap package (and using the option so that the routes are tailored for bike use). We first have to create adequate dataframes for customers and subscribers. 
+To go one step further in our analysis, we will attempt to visualize the most common trips made by Citi Bikes users. To do so, we will gather for each trip the start station and the station of arrival, and compute the most likely route the users took by using the route function from `ggmap` package (and using the option so that the routes are tailored for bike use). We first have to create adequate dataframes for customers and subscribers. 
 
 ```{r}
 concise_trips_merged_s <- concise_trips_merged[
@@ -917,9 +917,9 @@ rm(p53)
 
 The above map provides some interesting information:
 
-- There are some main zones where the trips are done: around Central Park, in Midtown as well as along the Hudson River. 
-- Touristic zones can be identified: Central Park, Governor's island for instance
-- The Hudson River route is particularly interesting because it is the very example of a hybrid route: it is widely used by new yorkers since it is the fastest way for going north/south. But it is also a very scenic route, thus a lot of tourists use it to see the shore
+- There are clearly some preferred zones for cycling: around Central Park, in Midtown as well as along the Hudson River. 
+- Touristic zones can be identified: Central Park, Governor's Island or the Brooklyn Bridge for instance.
+- The Hudson River route is particularly interesting because it is the very example of a hybrid route: it is widely used by New Yorkers since it is the fastest way for going north/south. But it is also a very scenic route, thus a lot of tourists use it.
 - Finally, it seems that an important part of the trips that are done in Midtown are mostly longitudinal: this might be a clue that people are using citibikes to compensate for the lack of subways in the East-West direction.
 
 
@@ -965,7 +965,7 @@ p55
 rm(p55)
 ```
 
-Here we have plotted the absolute difference in longitude between start and finish. Because of the layout fo New York, we can approximate longitude difference as a North/South difference and latitude difference as a East/West difference.We can see that for both latitude and longitude, subscribers have a much higher peak close to low values. 
+Here we have plotted the absolute difference in longitude between start and finish. Because of the layout of New York, we can approximate longitude difference as a North/South difference and latitude difference as a East/West difference.We can see that for both latitude and longitude, subscribers have a much higher peak close to low values. 
 
 It reveals yet another difference in the behavior of subscribers and customers: subscribers usually do shorter rides (in terms of distance) specially if it is for a North/South difference. This seems to follow the logic of commuting: commuters will not do lengthy North/South rides since it is slower than taking the subway. However, for short rides, it can be quicker to take a bike.
 
