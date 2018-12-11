@@ -124,11 +124,6 @@ concise_trips_merged_shorted['to'] <- paste(concise_trips_merged_shorted$latitud
 
 ```
 
-```{r}
-head(concise_trips_merged_shorted)
-```
-
-
 ```{r  width=8, height=10, cache=FALSE, results=FALSE, comment=FALSE, warning=FALSE,message=FALSE,echo=FALSE,fig.width=10, fig.height=17}
 library(stringr)
 options(expressions=10000)
