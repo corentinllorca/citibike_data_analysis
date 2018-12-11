@@ -587,10 +587,6 @@ Here, we see what we expected to see : users from 20 to 60 generally use Citi Bi
 
 In this second part, we have briefly seen what kind of demographic Citi Bike subscribers were part of. The average subscriber is a male between the age of 20 and 50, and he uses the system to commute, which corroborates our finding from the first part.
 
-```{r}
-rm(trips_ag)
-```
-
 ## 4. Customers and subscribers : two very different ways to use Citi Bike
 
 Here, we will be looking at the "Customer Type" variable in the trip database. It is an unordered factor corresponding to the type of customer having taken the trip. The different levels are "Customer" and "Subscriber". The Customers are defined as the people using a 1 or 3 day pass, thus more likely to be occasional users or tourists, and the Subscribers are those with the annual pass, thus more likely to be regular users. 
@@ -1005,14 +1001,137 @@ If we plot the distribution of distance for both customers and subscribers, it c
 
 Therefore, there is a genuine discrepancy between subscribers and customers which attest that there are two different ways of using citibikes: short rides or more lengthy rides, and it confirms that citibikes are not only used by tourists, but also by New Yorkers as a way of commuting.
 
-```{r}
-rm(concise_trips,concise_trips_merged,
-   concise_trips_merged_c,concise_trips_merged_s)
-```
+\pagebreak 
 
 # V. Executive summary
 
-trip times ages, evolution of trip n (annual trends), trip durations sub/cust, most frequent trips subs/cust
+The New York City bike sharing system Citi Bike, which covers most of Manhattan and some areas in Brooklyn, Queens and the Bronx, is the largest bike-sharing system in the United States. We have used the system's public database, which is available [online](https://www.citibikenyc.com/system-data), to extract insights about the user base of the system, and the typical behavioral patterns of those users. This summary aims to present our key findings. 
+
+First of all, we looked to extract seasonal trends in the usage of Citi Bike. In order to do that, we have plotted the daily number of trips taken, from October 2014 to September 2018. We have smoothed the plot in order to make it more readable. 
+
+```{r fig.width=8, fig.height = 3}
+pe1 <- ggplot(daily, aes(x = DATE, y = Trips)) + 
+       geom_smooth(color = "steelblue", method = "loess", 
+                   span = 0.05, se = FALSE) + 
+       scale_x_date(breaks = "6 months", date_labels = "%b %Y") + 
+       xlab("Date") + 
+       ggtitle("Evolution of the daily number of trips") + 
+       theme_bw(15) +
+       theme(plot.title = element_text(hjust = 0.5))
+
+
+pe1
+rm(pe1)
+```
+
+Here, we can see a very clear trend that repeats itself every year: people bike a lot less in winter, which is probably due to the harsh conditions New York City experiences during that season, which would affect bikes much more than cars or subway trains. In opposition to that, the numbers are very high during the summer months, not only because the weather is more forgiving, but also because the tourism numbers are higher in the summer; and we speculate that tourists sometimes use Citi Bike to travel around the city. Moreover, the sharp increases between August 2015 and September 2015, July 2016 and September 2016 representcritical months for Citibike that saw the deployment of a large number of bikes and new stations as part of their expansion plan. Regardless of seasonal trends, the general number of trips is increasing every year.
+
+From now on, we'd like to analyze the different behavioral patterns of users in function of groups that they might belong to. The first characteristic that we feel might help us to distinguish several user groups is the age of the user: here, we'll show you the distribution of daily trip times for users, separated by their age decade. 
+
+```{r fig.height=3, fig.width = 8}
+pe2 <- ggplot(trips_ag,
+             aes(x = as.numeric(format(trips_ag$starttime,"%H")) +
+                     as.numeric(format(trips_ag$starttime,"%M"))/60 +
+                     as.numeric(format(trips_ag$starttime,"%S"))/3600,
+                 color = factor(floor(trips_ag$age/10)*10))) + 
+       geom_density() +
+       scale_color_viridis_d(name = "Age (decade)",
+                          labels = c("10-20","20-30","30-40","40-50","50-60",
+                                      "60-70","70-80","80-90")) +
+       ggtitle("Repartition of daily trip times depending on age") + 
+       xlab("Hour of the day") + ylab("Density") + 
+       scale_x_continuous(breaks = seq(0,24,4)) +
+       geom_hline(yintercept = 0, color = 'white', size = 1) +
+       theme_bw(14) +
+       theme(plot.title = element_text(hjust = 0.5)) + 
+       theme(axis.text.y = element_blank())
+pe2
+rm(pe2)
+```
+
+We can see several interesting results here. First of all, for most age groups from 20 to 60 years old, we can see two clearly defined peaks around the traditional "rush hours" of 8 a.m. and 6 p.m., which indicates that those people use Citi Bike to commute - 20 to 60 also being the usual age groups for workers. As for people after 60, those tend to use Citi Bike at any time of day. The same goes for teenagers, except that they also go out more at night and much less in the morning.
+
+From now on, we will look at another way to split the user base in categories : the customer/subscriber status. Customers are defined as users taking trips with the 1 or 3 day pass, or with single rides, while Subscribers correspond to the users with the yearly membership plan. Please note that subscribers make up for about 90% of all trips, so are in heavy majority. The first thing we will be looking at is the distribution of daily trip times for both groups. 
+
+```{r fig.width=5, fig.height = 3}
+
+pe3 <- ggplot(trips,
+             aes(x = as.numeric(format(trips$starttime,"%H")) +
+                     as.numeric(format(trips$starttime,"%M"))/60 +
+                     as.numeric(format(trips$starttime,"%S"))/3600,
+                 color = usertype)) + 
+       geom_density() +
+       ggtitle("Daily repartition of trip times for each user type") + 
+       xlab("Hour of the day") + ylab("Density") + 
+       scale_x_continuous(breaks = seq(0,24,4)) +
+       scale_color_manual(name = "User type", 
+                          values = c("#E69F00","#000000")) +
+       geom_hline(yintercept = 0, color = 'white', size = 1) + 
+       theme_bw(11) +
+       theme(plot.title = element_text(hjust = 0.5)) + 
+       theme(axis.text.y = element_blank()) 
+pe3
+rm(pe3)
+```
+
+We can see that there's a clear difference in behavior between customers and subscribers, as highlighted by this graph. Subscribers use the system to commute, while customers use it more freely during the whole day, probably for leisure. This points to the fact that a large part of customers might be tourists. 
+
+Another interesting thing to visualise would be the distribution of trip lengths, again separated between the two groups. 
+
+```{r fig.height=3, fig.width = 8}
+line_data = tibble(usertype = c("Customer","Subscriber"), vline = c(30,45))
+
+breaks_21 = seq(0,120,3)
+pe4 <- ggplot(trips,aes(x = tripduration/60)) + 
+       geom_histogram(aes(y = ..density..),
+                      breaks = breaks_21, 
+                      fill = "lightblue",color = "black") + 
+       scale_x_continuous(limits = c(0,120),
+                          breaks = seq(0,120,30)) +
+       
+       facet_wrap(~usertype) + 
+       geom_vline(data = line_data, aes(xintercept = vline)) +
+       ggtitle("Repartition of trip durations for each user type") + 
+       xlab("Trip duration (minutes)") + ylab("Density") + 
+       theme_bw(15) +
+       theme(plot.title = element_text(hjust = 0.5)) + 
+       theme(axis.text.y = element_blank())
+pe4
+rm(pe4)
+```
+
+We can see that subscribers tend to favor shorter trips, with the overwhelming majority of trips taken being around 10 to 15 minutes long - that might correspond to the time for commuting. However, due to the large part of New Yorkers who live far from their workplace, our guess is that subscribers take those short trips as a complement for a commute that's done in majority by subway - meaning that they only bike from the subway stop to their home or their workplace.
+Customers, on the other hand, take longer trips, with the peak being around 25 minutes. This can be explained by the fact that tourists would explore the city much more than residents, thus taking longer-lasting trips. Moreover, we can notice that customers are generally much keener on taking long trips, going as far as to make them longer than the time that is included in the plan. Indeed, even though we do notice a significant dropoff between the 25-30 and 30-35 minutes categories, a significant part of customer trips are still longer than 30 minutes, with some of them going well past 1 hour. As for subscribers, they usually take very few trips longer than 45 minutes, which is their alloted time limit.
+
+Finally, we can show a map of the most frequent trips taken by both types of users. 
+
+```{r fig.width=15, fig.height = 15}
+pe5 <- base+
+       xlab("Latitude")+
+       ylab("Longitude")+
+       ggtitle("The most frequent trips around New York City")+
+       theme_bw(30) + 
+       theme(plot.title = element_text(hjust = 0.5)) + 
+       scale_color_colorblind(labels = c("Subscribers", "Customers"),
+                            name = "User type") + 
+       xlab("") + ylab("")
+
+pe5
+rm(pe5)
+```
+
+The zones around which most trips are taken are around Central Park and in Midtown, and along the Hudson River. Once again, we can clearly separate the behaviors of customers and subscribers: customers favor the more touristic zones like Central Park and even Governor's Island; while subscribers tend to bike in Midtown, taking trips that are mostly longitudinal: this might be a clue that people are using citibikes to compensate for the lack of subway cover in the East-West direction. Moreover, there are a few frequent subscriber trips in Brooklyn, which might indicate trips from subway stations to the user's home.
+The Hudson River route is particularly interesting because it is the perfect example of a hybrid route: it is widely used by New Yorkers since it is the fastest way for going north/south; but it is also a very scenic route, meaning that it also attracts a lot of tourists.
+
+Our conclusion on this analysis is that a majority of Citi Bike users are active professionals between the ages of 20 and 50, with the yearly subscription plan, and who use the system to commute to work, or as a complement to a subway trip to go to work. The rest of the users are either New York residents who use the system occasionally, mostly on weekends and during the summer, and tourists who use it to get around the city, also mostly during the summer. 
+
+```{r}
+rm(trips_ag)
+rm(concise_trips,concise_trips_merged,
+   concise_trips_merged_c,concise_trips_merged_s)
+
+```
+
 
 # VI. Interactive component
 
@@ -1022,10 +1141,10 @@ Here is the link to the interactive component for this project :
 
 # VII. Conclusion
 
-The Citibike data on each recorded trip is a rich dataset. We had to limit ourselves to examine three months for all information gathered from non aggregated data rather than use all the data available (mainly from 2014 onwards) because of the size of the data. Three months worth of recorded trips hovers a little under 1 GB which made it difficult to try incorporating more months with our limited hardware capacity and for the sake of the workflow. With more time and possibly better computational resources we would be able to expand the analysis to include more data and get a more accurate representation of the Citibike use across the years since the first bikes were made available. We learned to work around this obstacle by regularly freeing memory space along our analysis, avoiding redundancy in our data by splitting it in separate tables and only working with the data needed for each step of the exploration and visualization phases.
+The Citi Cike data on each recorded trip is a rich dataset. We had to limit ourselves to examine three months for all information gathered from non aggregated data rather than use all the data available (mainly from 2014 onwards) because of the size of the data. Three months worth of recorded trips hovers a little under 1 GB which made it difficult to try incorporating more months with our limited hardware capacity and for the sake of the workflow. With more time and possibly better computational resources we would be able to expand the analysis to include more data and get a more accurate representation of the Citibike use across the years since the first bikes were made available. We learned to work around this obstacle by regularly freeing memory space along our analysis, avoiding redundancy in our data by splitting it in separate tables and only working with the data needed for each step of the exploration and visualization phases.
 
 A challenge we had to face regarded intrinsic limitations of the data: each trip contained information on the start and end points (timewise and location-wise) but no data on the in-between. With more information such as location at different timesteps during the trip, we could have been able to reconstruct trips more accurately. This could have shed light on some new patterns we missed because of the coarser granularity of the data. On the other hand, this would have added a considerable amount of data to handle.
 
 We also wished each trip was associated with a user id. This would have opened up a realm of possibilities regarding the study of the patterns of bike usage and explore the data at the individual's level - perhaps more relevant to study subscriber behavior than one-timers. Whilst such data may be collected by Citibike we understand that it raises questions of anonymity - think of how easy it would become to fetch all the trip data from someone you may or may not know, just based on a few approximate trip times combined with basic user information such as age or gender - which might explain why such data is not released tot the public.
 
-Future directions include exploring the stations with the biggest turnover and assessing whether the bike imbalance problems impact the Citibike users choice of stations significantly or not and visualization of the stations filling up and being depleted during the day.
+Future directions include exploring the stations with the biggest turnover and assessing whether the bike imbalance problems impact the Citibike users choice of stations significantly or not and visualization of the stations filling up and being depleted during the day. This could be supported by data on the new Bike Angel program, which rewards users moving bikes from full to empty stations.
